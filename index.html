@@ -1,0 +1,1410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#060d17">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Jarvis">
+<title>JARVIS Mini</title>
+<style>
+:root{--bg:#060d17;--panel:#0d1b2d;--panel2:#12263d;--line:#183552;--arc:#5fd9ff;--amber:#ffb347;--text:#e0eef8;--dim:#7e9ab0;--ok:#4ade80;--bad:#ff6b6b;
+--font:"Bahnschrift","DIN Alternate","Roboto Condensed","Arial Narrow",system-ui,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;overflow:hidden}
+body{position:fixed;top:0;left:0;right:0;height:100dvh;background:var(--bg);color:var(--text);font-family:var(--font);display:flex;flex-direction:column;
+padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);letter-spacing:.2px}
+button,input{font:inherit;color:var(--text)}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+header{display:flex;align-items:center;gap:10px;padding:10px 6px 8px 14px}
+#ring{width:46px;height:46px;flex:none}
+#ring circle{fill:none;stroke:var(--arc);transform-origin:60px 60px}
+.r1{stroke-width:2;stroke-dasharray:4 6;animation:spin 24s linear infinite}
+.r2{stroke-width:5;stroke-dasharray:60 40;opacity:.85;animation:spin 9s linear infinite reverse}
+.r3{stroke-width:1.5;opacity:.5}
+.r4{stroke:var(--amber)!important;stroke-width:3;fill:rgba(255,179,71,.12)!important;transform-box:fill-box}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{50%{transform:scale(1.18)}}
+body[data-s=think] .r2{animation-duration:1.4s;stroke:var(--amber)}
+body[data-s=speak] .r4{animation:pulse .7s ease-in-out infinite}
+body[data-s=listen] .r3{stroke-width:6;opacity:1}
+.ttl{display:flex;flex-direction:column;min-width:0}
+.ttl b{font-size:18px;letter-spacing:4px;color:var(--arc);font-weight:600;line-height:1.1}
+#state{font-size:12px;color:var(--dim);min-height:15px}
+.dots{margin-left:auto;display:flex;gap:12px;font-size:12px;color:var(--dim)}
+.dots span{display:flex;align-items:center;gap:5px}
+.dots i{width:9px;height:9px;border-radius:50%;background:#35506a;display:block}
+.dots i.ok{background:var(--ok)}.dots i.busy{background:var(--amber);animation:blink 1s infinite}.dots i.bad{background:var(--bad)}
+@keyframes blink{50%{opacity:.35}}
+#gear{width:44px;height:44px;border:0;background:transparent;color:var(--dim);cursor:pointer;border-radius:50%;display:grid;place-items:center}
+#gear:active{background:var(--panel2)}
+#bar{height:0;background:var(--line);overflow:hidden;transition:height .2s}
+#bar.on{height:3px}
+#fill{height:100%;background:var(--arc);width:0;transition:width .3s}
+#bar.ind #fill{animation:slide 1.2s ease-in-out infinite}
+@keyframes slide{0%{margin-left:-35%}100%{margin-left:100%}}
+#status{display:none;margin:8px 14px 0;padding:8px 12px;font-size:12.5px;line-height:1.35;color:var(--dim);background:var(--panel);border-left:3px solid var(--amber);border-radius:8px}
+#status.on{display:block}
+#log{flex:1;overflow-y:auto;padding:14px 14px 8px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
+.m{max-width:86%;padding:10px 14px;line-height:1.42;white-space:pre-wrap;font-size:16px;animation:in .18s ease-out;word-wrap:break-word}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.m.j{align-self:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:4px 16px 16px 16px}
+.m.u{align-self:flex-end;background:rgba(255,179,71,.12);border:1px solid rgba(255,179,71,.55);color:#ffd08a;border-radius:16px 4px 16px 16px}
+.typing{display:inline-flex;gap:5px;padding:4px 0}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--arc);animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+#chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:0 14px 8px}
+#chips button{background:transparent;border:1px solid var(--line);color:var(--dim);border-radius:18px;padding:9px 14px;font-size:14px;cursor:pointer;min-height:40px}
+#chips button:active{background:var(--panel2)}
+#f{display:flex;gap:8px;align-items:center;padding:8px 12px 12px}
+#in{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:0 18px;min-height:48px;font-size:16px}
+#in::placeholder{color:#5d7a90}
+#in:focus{outline:none;border-color:var(--arc)}
+#f button{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;cursor:pointer;flex:none}
+#f button.go{background:var(--arc);border-color:var(--arc);color:#04121d}
+#f button:active{filter:brightness(1.2)}
+button:focus-visible{outline:2px solid var(--arc);outline-offset:2px}
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;z-index:19}
+#scrim.open{opacity:1;pointer-events:auto}
+#sheet{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#0b1829;border-top:1px solid var(--line);border-radius:20px 20px 0 0;padding:8px 18px calc(16px + env(safe-area-inset-bottom));max-height:80dvh;overflow-y:auto;transform:translateY(105%);transition:transform .25s ease}
+#sheet.open{transform:none}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:4px auto 10px}
+#sheet h2{margin:0 0 4px;font-size:17px;font-weight:600;letter-spacing:1px}
+.row{padding:12px 0;border-bottom:1px solid var(--line)}
+.row.sw-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.row b{display:block;font-weight:600;font-size:15px}
+.row small{display:block;color:var(--dim);font-size:12.5px;margin-top:2px}
+.sw{width:52px;height:30px;border-radius:15px;border:0;background:#1d3956;position:relative;cursor:pointer;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#9db4c6;transition:transform .2s,background .2s}
+.sw[aria-checked=true]{background:var(--arc)}
+.sw[aria-checked=true]::after{transform:translateX(22px);background:#04121d}
+.seg{display:flex;margin-top:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{flex:1;background:transparent;border:0;padding:11px 6px;font-size:14px;color:var(--dim);cursor:pointer;min-height:44px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--arc);color:#04121d;font-weight:600}
+.pb{width:100%;min-height:44px;margin-top:10px;border-radius:12px;border:1px solid var(--arc);background:transparent;color:var(--arc);font-size:15px;cursor:pointer}
+.two{display:flex;gap:8px}.two .pb{flex:1}
+#linkBox summary{cursor:pointer;list-style:none}#linkBox summary::-webkit-details-marker{display:none}
+#linkBox textarea{width:100%;margin-top:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;font:12px/1.3 monospace;color:var(--text);resize:none}
+.pl{display:flex;gap:8px;margin-top:10px}
+.pl input{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:0 12px;min-height:44px;font-size:14px}
+.pl button{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--arc);background:transparent;color:var(--arc);cursor:pointer}
+.det{padding:10px 0 4px;font-size:12px;color:var(--dim);line-height:1.5;word-break:break-word}
+.hd{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#0b1829;padding:2px 0 6px;z-index:1}
+#done{min-height:40px;padding:0 18px;border-radius:20px;border:1px solid var(--arc);background:transparent;color:var(--arc);font-size:15px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){#ring *,.typing i,.dots i{animation:none!important}}
+</style>
+</head>
+<body data-s="idle">
+<header>
+  <svg id="ring" viewBox="0 0 120 120" aria-hidden="true">
+    <circle class="r1" cx="60" cy="60" r="56"/><circle class="r2" cx="60" cy="60" r="44"/>
+    <circle class="r3" cx="60" cy="60" r="32"/><circle class="r4" cx="60" cy="60" r="14"/>
+  </svg>
+  <div class="ttl"><b>JARVIS</b><span id="state">Standing by</span></div>
+  <div class="dots"><span><i id="dV"></i>Voice</span><span><i id="dB"></i>Brain</span></div>
+  <button id="gear" type="button" aria-label="Settings"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.5"/><circle cx="8" cy="17" r="2.5"/></svg></button>
+</header>
+<div id="bar"><div id="fill"></div></div>
+<div id="status"></div>
+<div id="log" aria-live="polite"></div>
+<div id="chips">
+  <button type="button" data-q="what time is it">What time is it</button>
+  <button type="button" data-q="test voice">Test voice</button>
+  <button type="button" data-q="play my playlist">Play my playlist</button>
+</div>
+<div id="f">
+  <button type="button" id="mic" aria-label="Speak"><svg class="i" viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+  <input id="in" placeholder="Talk to Jarvis" enterkeyhint="send" autocapitalize="sentences" autocomplete="off">
+  <button class="go" type="button" aria-label="Send"><svg class="i" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+</div>
+<div id="scrim"></div>
+<div id="sheet" role="dialog" aria-label="Settings">
+  <div class="grab"></div>
+  <div class="hd"><h2>SETTINGS</h2><button id="done" type="button">Done</button></div>
+  <div class="row sw-row"><div><b>Speak replies</b><small>Turn the voice on or off</small></div><button class="sw" id="swVoice" role="switch" aria-checked="true"></button></div>
+  <div class="row"><b>Speaking speed</b><div class="seg" id="segSpeed"><button data-v="1">Normal</button><button data-v="1.25">Quick</button><button data-v="1.5">Fast</button></div></div>
+  <div class="row"><b>Voice engine</b><small>Best sounds richer. Quick is lighter on your phone.</small><div class="seg" id="segEngine"><button data-v="best">Best</button><button data-v="quick">Quick</button></div></div>
+  <div class="row sw-row"><div><b>Match my recording</b><small>Tunes pitch and tone toward your sample</small></div><button class="sw" id="swMatch" role="switch" aria-checked="true"></button></div>
+  <div class="row sw-row"><div><b>Brain awake</b><small>Needed for open conversation</small></div><button class="sw" id="swBrain" role="switch" aria-checked="false"></button></div>
+  <div class="row sw-row" id="installRow" style="display:none"><div><b>Install as app</b><small>Adds Jarvis to your home screen</small></div><button class="pb" id="installBtn" type="button" style="width:auto;margin:0;padding:0 18px">Install</button></div>
+  <div class="row"><b>Amazon Music playlist</b><small>Paste your playlist link, then say “play my playlist”.</small><div class="pl"><input id="plIn" placeholder="https://music.amazon.com/playlists/…" autocapitalize="off" autocomplete="off"><button id="plSave" type="button">Save</button></div></div>
+  <details class="row" id="linkBox"><summary><b>Link another device</b><small>Send commands or code to Jarvis from a second phone or PC.</small></summary>
+    <button class="pb" id="linkMake" type="button">1. Create code</button>
+    <textarea id="linkOut" readonly placeholder="Your code appears here" rows="3"></textarea>
+    <div class="two"><button class="pb" id="linkCopy" type="button">Copy</button><button class="pb" id="linkShare" type="button">Share</button></div>
+    <small>2. Open the transmitter page on the other device, paste this code, and send back the reply code it gives you.</small>
+    <textarea id="linkIn" placeholder="3. Paste the reply code here" rows="3"></textarea>
+    <button class="pb" id="linkGo" type="button">Connect</button>
+    <div id="linkStat" class="det">Not linked.</div>
+  </details>
+  <div class="row"><b>Brain engine</b><small>Steady works on every phone. Fast uses the graphics chip but can crash.</small><div class="seg" id="segBrainEng"><button data-v="cpu">Steady</button><button data-v="gpu">Fast</button></div></div>
+  <div class="row"><b>Brain size</b><small>Smarter answers better but loads slower. Fast is tiny and often wrong.</small><div class="seg" id="segSize"><button data-v="fast">Fast</button><button data-v="smart">Smarter</button></div></div>
+  <div class="det" id="detV"></div><div class="det" id="detB"></div>
+</div>
+<script>
+
+window.addEventListener("unhandledrejection",function(ev){var m=String(ev.reason&&ev.reason.message||ev.reason);if(/Instance reference|device was lost|GPUDevice|OperationError/i.test(m)){ev.preventDefault();console.warn(m);return}var d=document.getElementById("log");if(d){var e=document.createElement("div");e.className="m j";e.textContent="Error: "+(ev.reason&&ev.reason.message||ev.reason);d.appendChild(e)}});
+window.onerror=function(m,u,l){var d=document.getElementById("log");if(d){var e=document.createElement("div");e.className="m j";e.textContent="Error: "+m+" (line "+l+")";d.appendChild(e)}};
+const $=s=>document.querySelector(s), log=$('#log'), inp=$('#in');
+const setS=(s,t)=>{document.body.dataset.s=s;$('#state').textContent=t||({idle:'Standing by',think:'Thinking',speak:'Speaking',listen:'Listening'})[s]};
+setS('idle');
+const cap=s=>s.replace(/\b\w/g,c=>c.toUpperCase());
+const short=e=>String(e&&e.message||e).slice(0,150);
+function add(who,text){const d=document.createElement('div');d.className='m '+who;d.textContent=text;log.append(d);log.scrollTop=log.scrollHeight;return d}
+function typing(){const d=add('j','');d.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';return d}
+const ST={v:'Voice: starting',b:'Brain: asleep (wakes on your first question)'};
+const status=()=>{
+  const vS=nvReady?'ok':(/failed|built-in/.test(ST.v)?'bad':'busy');
+  const bS=engine?'ok':(brainLoading?'busy':(/failed|paused|needs|no GPU|couldn|blocking/.test(ST.b)?'bad':'off'));
+  $('#dV').className=vS;$('#dB').className=bS;
+  const show=[];if(vS!=='ok')show.push(ST.v);if(bS==='busy'||bS==='bad')show.push(ST.b);
+  const txt=show.join('  ·  '),pm=(txt.match(/(\d+)%/g)||[]).pop(),busy=vS==='busy'||bS==='busy';
+  $('#status').textContent=txt;$('#status').classList.toggle('on',show.length>0);
+  $('#bar').classList.toggle('on',busy);$('#bar').classList.toggle('ind',busy&&!pm);
+  $('#fill').style.width=pm?parseInt(pm)+'%':'35%';
+  labels();
+};
+
+/* ---------- memory (stays on this device) ---------- */
+let M;try{M=JSON.parse(localStorage.getItem('jarvis-mini')||'')}catch(e){}
+M=M||{name:'',facts:[],notes:[]};
+const save=()=>{try{localStorage.setItem('jarvis-mini',JSON.stringify(M))}catch(e){}};
+const sir=()=>M.name||'sir';
+
+/*VOICE_START*/
+const VX=(()=>{
+const FS=22050,TAU=Math.PI*2;
+/* formant targets [F1,F2,F3] */
+const VW={AA:[730,1090,2440],AE:[660,1720,2410],AH:[640,1190,2390],AO:[570,840,2410],EH:[530,1840,2480],ER:[490,1350,1690],IH:[390,1990,2550],IY:[270,2290,3010],UH:[440,1020,2240],UW:[300,870,2240]};
+const DP={AY:['AA','IY'],EY:['EH','IY'],OW:['AO','UW'],AW:['AA','UW'],OY:['AO','IY']};
+const GL={W:[300,610,2200],Y:[270,2290,3010],R:[310,1060,1380],L:[360,1000,2800]};
+const NS={M:[250,1100,2200],N:[250,1700,2600],NG:[250,2000,2700]};
+/* fricatives: voiced, noise centre, bandwidth, amount, ms */
+const FR={S:[0,6500,2800,.75,95],Z:[1,6500,2800,.6,80],SH:[0,3300,1600,1.6,100],ZH:[1,3300,1600,1.2,85],F:[0,4500,5000,1,85],V:[1,4500,5000,.8,65],TH:[0,5000,5000,1,85],DH:[1,5000,5000,.7,45],HH:[0,0,0,0,60]};
+/* stops: voiced, burst centre, bandwidth, amount */
+const ST={P:[0,1500,1500,.9],B:[1,1500,1500,.7],T:[0,4500,2500,1.1],D:[1,4500,2500,.8],K:[0,2200,1500,1.1],G:[1,2200,1500,.8]};
+const VOW=new Set([...Object.keys(VW),...Object.keys(DP)]);
+const FN=new Set('the a an of to and is it in on at i you my your for with as was be are or but that this its his her he she we they me us do'.split(' '));
+const DICT=Object.fromEntries(`the DH AH
+a AH
+an AE N
+i AY
+you Y UW
+your Y AO R
+is IH Z
+it IH T
+it's IH T S
+i'm AY M
+i'll AY L
+i'd AY D
+i've AY V
+you're Y AO R
+you'll Y UW L
+that's DH AE T S
+what's W AH T S
+let's L EH T S
+don't D OW N T
+can't K AE N T
+won't W OW N T
+didn't D IH D AH N T
+isn't IH Z AH N T
+there's DH EH R Z
+here's HH IH R Z
+sir S ER'
+jarvis JH AA' R V IH S
+hello HH AH L OW'
+hi HH AY
+yes Y EH S
+no N OW
+okay OW K EY'
+to T UW
+of AH V
+and AE N D
+are AA R
+was W AH Z
+were W ER
+have HH AE V
+has HH AE Z
+had HH AE D
+do D UW
+does D AH Z
+done D AH N
+what W AH T
+who HH UW
+how HH AW
+now N AW
+down D AW N
+town T AW N
+why W AY
+when W EH N
+where W EH R
+there DH EH R
+they DH EY
+them DH EH M
+then DH EH N
+this DH IH S
+that DH AE T
+these DH IY Z
+those DH OW Z
+with W IH DH
+for F AO R
+from F R AH M
+one W AH N
+two T UW
+three TH R IY
+four F AO R
+five F AY V
+six S IH K S
+seven S EH V AH N
+eight EY T
+nine N AY N
+ten T EH N
+eleven IH L EH' V AH N
+twelve T W EH L V
+thirteen TH ER T IY' N
+fourteen F AO R T IY' N
+fifteen F IH F T IY' N
+sixteen S IH K S T IY' N
+seventeen S EH V AH N T IY' N
+eighteen EY T IY' N
+nineteen N AY N T IY' N
+twenty T W EH N T IY
+thirty TH ER T IY
+forty F AO R T IY
+fifty F IH F T IY
+sixty S IH K S T IY
+seventy S EH V AH N T IY
+eighty EY T IY
+ninety N AY N T IY
+zero Z IY R OW
+hundred HH AH N D R AH D
+thousand TH AW Z AH N D
+point P OY N T
+oh OW
+o'clock AH K L AA' K
+xam EY EH M
+xpm P IY EH M
+percent P ER S EH' N T
+time T AY M
+timer T AY M ER
+minute M IH N AH T
+minutes M IH N AH T S
+second S EH K AH N D
+seconds S EH K AH N D Z
+hour AW ER
+hours AW ER Z
+noted N OW T AH D
+memory M EH M ER IY
+battery B AE T ER IY
+charging CH AA R JH IH NG
+systems S IH S T AH M Z
+online AA N L AY' N
+ready R EH D IY
+help HH EH L P
+please P L IY Z
+thank TH AE NK
+thanks TH AE NK S
+good G UH D
+morning M AO R N IH NG
+evening IY V N IH NG
+afternoon AE F T ER N UW'
+today T AH D EY'
+tomorrow T AH M AA' R OW
+tonight T AH N AY' T
+welcome W EH L K AH M
+brain B R EY N
+heads HH EH D Z
+tails T EY L Z
+rolled R OW L D
+pleased P L IY Z D
+meet M IY T
+anything EH N IY TH IH NG
+something S AH M TH IH NG
+ask AE S K
+may M EY
+can K AE N
+will W IH L
+would W UH D
+could K UH D
+should SH UH D
+about AH B AW' T
+again AH G EH' N
+because B IH K AH' Z
+remember R IH M EH' M B ER
+my M AY
+me M IY
+we W IY
+he HH IY
+she SH IY
+be B IY
+been B IH N
+by B AY
+so S OW
+not N AA T
+but B AH T
+or AO R
+as AE Z
+at AE T
+in IH N
+on AA N
+up AH P
+all AO L
+any EH N IY
+more M AO R
+some S AH M
+come K AH M
+love L AH V
+give G IH V
+live L IH V
+like L AY K
+make M EY K
+take T EY K
+know N OW
+see S IY
+say S EY
+get G EH T
+go G OW
+going G OW IH NG
+just JH AH S T
+very V EH R IY
+your Y AO R
+our AW ER
+their DH EH R
+his HH IH Z
+her HH ER
+him HH IH M
+its IH T S
+off AO F
+out AW T
+over OW V ER
+only OW N L IY
+also AO L S OW
+sorry S AA R IY
+unable AH N EY B AH L
+offline AO F L AY' N
+command K AH M AE' N D
+mode M OW D
+load L OW D
+fully F UH L IY
+local L OW K AH L
+device D IH V AY' S
+notes N OW T S
+note N OW T
+timer T AY M ER
+reminder R IH M AY' N D ER
+done D AH N
+snag S N AE G
+weather W EH DH ER
+science S AY AH N S
+web W EH B
+search S ER CH
+internet IH N T ER N EH T
+name N EY M
+call K AO L
+open OW P AH N
+close K L OW Z
+play P L EY
+stop S T AA P
+work W ER K
+world W ER L D
+listen L IH S AH N
+hear HH IH R
+ready R EH D IY`.split('\n').map(l=>{const i=l.indexOf(' ');return [l.slice(0,i),l.slice(i+1)]}));
+const ON='zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen'.split(' ');
+const TN='_ _ twenty thirty forty fifty sixty seventy eighty ninety'.split(' ');
+function nw(n){if(n<20)return ON[n];if(n<100)return TN[n/10|0]+(n%10?' '+ON[n%10]:'');if(n<1000)return ON[n/100|0]+' hundred'+(n%100?' '+nw(n%100):'');if(n<1e6)return nw(n/1000|0)+' thousand'+(n%1000?' '+nw(n%1000):'');return String(n).split('').map(d=>ON[+d]).join(' ')}
+function prep(t){
+  t=t.replace(/[’‘]/g,"'").replace(/\bAM\b/g,'xam').replace(/\bPM\b/g,'xpm');
+  t=t.replace(/(\d+):(\d\d)/g,(m,h,mi)=>nw(+h)+' '+(mi==='00'?"o'clock":mi[0]==='0'?'oh '+nw(+mi):nw(+mi)));
+  t=t.replace(/(\d+)%/g,'$1 percent').replace(/\d+(\.\d+)?/g,m=>{if(m.includes('.')){const [a,b]=m.split('.');return nw(+a)+' point '+b.split('').map(d=>ON[+d]).join(' ')}return nw(+m)});
+  t=t.replace(/[•\n]+/g,'. ').replace(/[“”"]/g,'');
+  return t.toLowerCase().replace(/[^a-z'.,!?;:\s]/g,' ');
+}
+/* letter-to-sound rules for words not in the dictionary */
+const RULES=[['tion','SH AH N'],['sion','ZH AH N'],['ture','CH ER'],['ight','AY T'],['ough','AO'],['igh','AY'],['tch','CH'],['dge','JH'],['ph','F'],['th','TH'],['sh','SH'],['ch','CH'],['ck','K'],['ng','NG'],['nk','NG K'],['qu','K W'],['wh','W'],['gh',''],['ee','IY'],['ea','IY'],['oo','UW'],['ai','EY'],['ay','EY'],['oa','OW'],['ow','OW'],['ou','AW'],['oi','OY'],['oy','OY'],['au','AO'],['aw','AO'],['ie','IY'],['ei','EY'],['ew','Y UW'],['ue','UW'],['er','ER'],['ir','ER'],['ur','ER'],['ar','AA R'],['or','AO R'],['ing','IH NG']];
+function g2p(w){
+  if(DICT[w])return DICT[w].split(' ');
+  let m;
+  if((m=w.match(/^(.+)'s$/))&&DICT[m[1]]){const b=DICT[m[1]].split(' '),l=b[b.length-1].replace("'",'');return b.concat(/^(P|T|K|F|TH)$/.test(l)?'S':'Z')}
+  w=w.replace(/'/g,'');
+  if(DICT[w])return DICT[w].split(' ');
+  const n=w.length,isV=c=>!!c&&'aeiouy'.includes(c);
+  if(n>3&&/[^aeiou]ed$/.test(w)){const b=g2p(w.slice(0,-2)),l=b[b.length-1];return b.concat(/^(T|D)$/.test(l)?['IH','D']:/^(P|K|F|S|SH|CH|TH)$/.test(l)?['T']:['D'])}
+  const out=[];let end=n,se=false;
+  if(n>2&&w[n-1]==='e'&&!isV(w[n-2])){end=n-1;se=true}
+  let i=0;
+  while(i<end){
+    const c=w[i],nx=w[i+1],pv=w[i-1];
+    if(i===0&&(w.startsWith('kn')||w.startsWith('wr'))){out.push(c==='k'?'N':'R');i+=2;continue}
+    let hit=false;
+    for(const [p,ph] of RULES){
+      if(w.startsWith(p,i)&&(p!=='ing'||i+3===n)){if(ph)out.push(...ph.split(' '));i+=p.length;hit=true;break}
+    }
+    if(hit)continue;
+    if(nx===c&&!isV(c)){i++;continue}
+    const long=se&&i===end-2;
+    switch(c){
+      case 'a':out.push(long?'EY':'AE');break;
+      case 'e':out.push(long?'IY':'EH');break;
+      case 'i':out.push(long?'AY':'IH');break;
+      case 'o':out.push(long?'OW':'AA');break;
+      case 'u':if(long)out.push('Y','UW');else out.push('AH');break;
+      case 'y':out.push(i===0?'Y':i===n-1?(n<=3?'AY':'IY'):'IH');break;
+      case 'c':out.push(nx&&'eiy'.includes(nx)?'S':'K');break;
+      case 'g':out.push(nx&&'eiy'.includes(nx)?'JH':'G');break;
+      case 's':if(i===n-1){const l=out[out.length-1];out.push(pv==='s'||/^(P|T|K|F|TH|HH)$/.test(l)?'S':'Z')}else out.push(isV(pv)&&isV(nx)?'Z':'S');break;
+      case 'x':out.push('K','S');break;
+      case 'q':out.push('K');break;
+      case 'j':out.push('JH');break;
+      case 'l':if(se&&i===end-1&&!isV(pv))out.push('AH');out.push('L');break;
+      default:out.push(c.toUpperCase());
+    }
+    i++;
+  }
+  return out.filter(p=>VW[p]||DP[p]||GL[p]||NS[p]||FR[p]||ST[p]||p==='CH'||p==='JH');
+}
+/* text -> phone list with stress and sentence melody */
+function parse(text){
+  let t=prep(text);if(!/[.!?]\s*$/.test(t))t+='.';
+  const toks=t.match(/[a-z']+|[.,!?;:]/g)||[],P=[];let from=0;
+  for(const tk of toks){
+    if(/^[.,!?;:]$/.test(tk)){
+      for(let k=P.length-1;k>=from;k--)if(P[k].p&&VOW.has(P[k].p)){P[k].e=tk==='?'?'rise':/[.!]/.test(tk)?'fall':'comma';break}
+      P.push({pause:/[.!?]/.test(tk)?380:200});from=P.length;continue;
+    }
+    const ph=g2p(tk),fn=FN.has(tk),marked=ph.some(x=>x.endsWith("'"));let first=true;
+    for(let x of ph){
+      let s=0;if(x.endsWith("'")){x=x.slice(0,-1);s=1}else if(!marked&&!fn&&first&&VOW.has(x))s=1;
+      if(VOW.has(x))first=false;P.push({p:x,s,fn});
+    }
+    P.push({gap:1});
+  }
+  return P;
+}
+/* phone list -> acoustic targets */
+function targets(P){
+  const T=[],add=o=>T.push(Object.assign({d:80,F:[500,1500,2500],av:0,ah:0,af:0,nc:3000,nb:2000,f0:1,fast:0},o));
+  const stop=(p,sc)=>{const [v,c,b,a]=ST[p];
+    add({d:50*sc,F:[250,1100,2200],av:v?.3:0});
+    add({d:12,av:v?.4:0,af:a,nc:c,nb:b,fast:1});
+    if(!v)add({d:28*sc,ah:.5,af:.05,nc:c,nb:b})};
+  const fric=(p,sc)=>{const [v,c,b,a,d]=FR[p];add({d:d*sc,F:[400,1500,2500],av:v?.45:0,af:a,nc:c,nb:b,f0:.97})};
+  for(const x of P){
+    if(x.pause){add({d:x.pause});continue}
+    if(x.gap){add({d:10});continue}
+    const p=x.p,sc=x.fn?.8:1,ext=x.e?1.3:1;
+    const f0=x.e==='fall'?.8:x.e==='rise'?1.32:x.e==='comma'?1.1:x.s?1.1:.97;
+    if(VW[p])add({d:(x.s?125:80)*sc*ext,F:VW[p],av:1,ah:.02,f0});
+    else if(DP[p]){const [a,b]=DP[p],d=(x.s?190:130)*sc*ext;add({d:d*.5,F:VW[a],av:1,ah:.02,f0});add({d:d*.5,F:VW[b],av:1,ah:.02,f0})}
+    else if(GL[p])add({d:p==='R'||p==='L'?75:60,F:GL[p],av:.7,f0:.98});
+    else if(NS[p])add({d:70,F:NS[p],av:.4,f0:.97});
+    else if(p==='HH')add({d:60,ah:.6});
+    else if(FR[p])fric(p,sc);
+    else if(ST[p])stop(p,sc);
+    else if(p==='CH'){stop('T',sc);fric('SH',sc)}
+    else if(p==='JH'){stop('D',sc);fric('ZH',sc)}
+  }
+  return T;
+}
+function Res(){this.y1=0;this.y2=0;this.A=0;this.B=0;this.C=0}
+Res.prototype.set=function(f,bw){const C=-Math.exp(-TAU*bw/FS),B=2*Math.exp(-Math.PI*bw/FS)*Math.cos(TAU*f/FS);this.A=1-B-C;this.B=B;this.C=C};
+Res.prototype.run=function(x){const y=this.A*x+this.B*this.y1+this.C*this.y2;this.y2=this.y1;this.y1=y;return y};
+/* the synthesiser: glottal pulse -> 5 formant resonators, plus filtered noise */
+const FG=.5;
+function render(T,base){
+  let N=0;for(const t of T)N+=Math.round(t.d*FS/1000);
+  const out=new Float32Array(N),cur={F1:500,F2:1500,F3:2500,av:0,ah:0,af:0,nc:3000,nb:2000,f0:1};
+  const R=[0,1,2,3,4].map(()=>new Res),NR=new Res,BW=[70,110,170,250,300];
+  const kf=1-Math.exp(-1/(FS*.012)),kp=1-Math.exp(-1/(FS*.03)),ka=1-Math.exp(-1/(FS*.005)),kq=1-Math.exp(-1/(FS*.0012));
+  let ph=0,up=0,n=0,seed=7;
+  const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/2147483648-1};
+  for(const t of T){
+    const len=Math.round(t.d*FS/1000),ca=t.fast?kq:ka,cf=t.fast?kq*.5:kf;
+    for(let j=0;j<len;j++,n++){
+      cur.F1+=(t.F[0]-cur.F1)*cf;cur.F2+=(t.F[1]-cur.F2)*cf;cur.F3+=(t.F[2]-cur.F3)*cf;
+      cur.av+=(t.av-cur.av)*ca;cur.ah+=(t.ah-cur.ah)*ca;cur.af+=(t.af-cur.af)*ca;
+      cur.nc+=(t.nc-cur.nc)*kf;cur.nb+=(t.nb-cur.nb)*kf;cur.f0+=(t.f0-cur.f0)*kp;
+      if((n&7)===0){R[0].set(cur.F1,BW[0]);R[1].set(cur.F2,BW[1]);R[2].set(cur.F3,BW[2]);R[3].set(3500,BW[3]);R[4].set(4500,BW[4]);NR.set(cur.nc,cur.nb)}
+      ph+=base*(1.12-.22*n/N)*cur.f0/FS;if(ph>=1)ph-=1;
+      const u=ph<.6?.5*(1-Math.cos(Math.PI*ph/.6)):Math.cos((ph-.6)/.4*Math.PI/2);
+      const g=(u-up)*40;up=u;const nz=rnd();
+      let x=cur.av*g+cur.ah*nz*6;
+      for(let r=0;r<5;r++)x=R[r].run(x);
+      out[n]=x+cur.af*NR.run(nz)*FG;
+    }
+  }
+  return out;
+}
+/* finishing: metallic comb for the JARVIS tone, soft clip, fades */
+function finish(out){
+  const N=out.length,D=Math.round(FS*.0105);
+  for(let i=N-1;i>=D;i--)out[i]+=.28*out[i-D];
+  let pk=1e-9;for(let i=0;i<N;i++)pk=Math.max(pk,Math.abs(out[i]));
+  const gn=1.3/pk,f=Math.round(FS*.01);
+  for(let i=0;i<N;i++){let v=Math.tanh(out[i]*gn)*.85;if(i<f)v*=i/f;if(N-i<f)v*=(N-i)/f;out[i]=v}
+  return out;
+}
+function say(text,pitch){return finish(render(targets(parse(text)),pitch||105))}
+return {say,parse,targets,render,g2p,FS,nw};
+})();
+/*VOICE_END*/
+
+
+/*MATCH_START*/
+const MATCH=(()=>{
+  const EDGES=[80,160,320,640,1280,2560,5120,10240];
+  function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let b=n>>1;for(;j&b;b>>=1)j^=b;j^=b;if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t}}
+    for(let len=2;len<=n;len<<=1){const a=-2*Math.PI/len,wr=Math.cos(a),wi=Math.sin(a);
+      for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let k=0;k<len/2;k++){const u=i+k,v=i+k+len/2,xr=re[v]*cr-im[v]*ci,xi=re[v]*ci+im[v]*cr;
+        re[v]=re[u]-xr;im[v]=im[u]-xi;re[u]+=xr;im[u]+=xi;const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t}}}}
+  const median=a=>{const s=[...a].sort((x,y)=>x-y);return s.length?s[s.length>>1]:0};
+  /* median pitch of the voiced parts, in Hz */
+  function f0(y,sr){
+    const d=Math.max(1,Math.round(sr/7500)),fs=sr/d,n=Math.floor(y.length/d),z=new Float32Array(n);
+    for(let i=0;i<n;i++){let s=0;for(let k=0;k<d;k++)s+=y[i*d+k];z[i]=s/d}
+    let pk=0;for(let i=0;i<n;i++)pk=Math.max(pk,Math.abs(z[i]));if(pk<1e-4)return 0;
+    const N=Math.round(.04*fs),H=Math.round(.01*fs),lo=Math.round(fs/300),hi=Math.round(fs/70),out=[];
+    for(let st=0;st+N+hi<n;st+=H){
+      let e=0;for(let i=0;i<N;i++)e+=z[st+i]*z[st+i];if(Math.sqrt(e/N)<.06*pk)continue;
+      const r=new Float32Array(hi+1);let best=0;
+      for(let k=lo;k<=hi;k++){let s=0;for(let i=0;i<N;i++)s+=z[st+i]*z[st+i+k];r[k]=s/(e+1e-9);if(r[k]>best)best=r[k]}
+      if(best<.5)continue;
+      let pick=0;for(let k=lo+1;k<hi;k++)if(r[k]>=.85*best&&r[k]>=r[k-1]&&r[k]>=r[k+1]){pick=k;break}
+      if(pick)out.push(fs/pick);
+    }
+    return out.length>8?median(out):0;
+  }
+  /* tone: average power in 7 octave bands, in dB relative to the 640-1280 Hz band */
+  function bands(y,sr){
+    const N=2048,H=1024,win=new Float32Array(N);for(let i=0;i<N;i++)win[i]=.5-.5*Math.cos(2*Math.PI*i/N);
+    const frames=[];let mx=0;
+    for(let st=0;st+N<=y.length;st+=H){let e=0;for(let i=0;i<N;i++)e+=y[st+i]*y[st+i];e=Math.sqrt(e/N);frames.push([st,e]);mx=Math.max(mx,e)}
+    const P=new Float64Array(N/2);let used=0;
+    for(const [st,e] of frames){if(e<.1*mx)continue;const re=new Float64Array(N),im=new Float64Array(N);
+      for(let i=0;i<N;i++)re[i]=y[st+i]*win[i];fft(re,im);for(let k=0;k<N/2;k++)P[k]+=re[k]*re[k]+im[k]*im[k];used++}
+    if(used<3)return null;
+    const bw=sr/N,E=[];
+    for(let b=0;b<EDGES.length-1;b++){let s=0;for(let k=Math.ceil(EDGES[b]/bw);k<Math.min(N/2,Math.floor(EDGES[b+1]/bw));k++)s+=P[k];E.push(s+1e-12)}
+    return E.map(v=>10*Math.log10(v/E[3]));
+  }
+  return {f0,bands,median};
+})();
+/*MATCH_END*/
+
+/* ---------- voice: neural British Piper voice by default, built-in synth as fallback ---------- */
+let voiceQ='best';try{voiceQ=localStorage.getItem('jv-vq')||'best'}catch(e){}
+let speed=1.25;try{speed=parseFloat(localStorage.getItem('jv-speed'))||1.25}catch(e){}
+const voiceId=()=>voiceQ==='best'?'en_GB-alan-medium':'en_GB-alan-low';
+let voiceOn=true,ac=null,src=null,nv=null,nvReady=false,nvGen=0,nvSrc=[],chain=null;
+function audio(){ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();return ac}
+addEventListener('pointerdown',()=>{try{audio()}catch(e){}},{once:true});
+function num(s){s=s.replace(/,/g,'');const neg=s[0]==='-';s=s.replace('-','');let o;
+  if(s.includes('.')){const [a,b]=s.split('.');o=VX.nw(+a)+' point '+b.split('').map(d=>VX.nw(+d)).join(' ')}else o=VX.nw(+s);
+  return (neg?'minus ':'')+o}
+function natural(t){
+  const mm=m=>+m?(+m<10?'oh '+VX.nw(+m):VX.nw(+m)):'';
+  t=t.replace(/[’‘]/g,"'").replace(/[•*_`#>]+/g,' ').replace(/\n+/g,'. ');
+  t=t.replace(/(\d{1,2}):(\d{2})\s*([AaPp])\.?[Mm]\.?/g,(m,h,mi,ap)=>VX.nw(+h)+(+mi?' '+mm(mi):'')+' '+ap.toUpperCase()+' M');
+  t=t.replace(/(\d{1,2}):(\d{2})/g,(m,h,mi)=>VX.nw(+h)+' '+(+mi?mm(mi):"o'clock"));
+  t=t.replace(/(-?\d+(?:\.\d+)?)\s?°\s?([CF])\b/g,(m,n,u)=>num(n)+' degrees '+(u==='C'?'Celsius':'Fahrenheit'));
+  t=t.replace(/(\d[\d,]*(?:\.\d+)?)\s?%/g,(m,n)=>num(n)+' percent');
+  t=t.replace(/-?\d[\d,]*(?:\.\d+)?/g,num);
+  t=t.replace(/\b([A-Z]{2,4})\b/g,(m,w)=>/^(OK|RAM|NASA|NATO|JARVIS)$/.test(w)?m:w.split('').join(' '));
+  return t.replace(/\s+/g,' ').trim();
+}
+let EQ=null,matchOn=true,mt=null,cal={f:[],b:[]};
+const REFM={f0:126.7,bands:[-6.1,2.2,4.1,0,-3.8,-8.6,-8.4]};   // measured from your recording
+try{mt=JSON.parse(localStorage.getItem('jv-match')||'null');if(localStorage.getItem('jv-matchoff')==='1')matchOn=false}catch(e){}
+function buildChain(c){
+  const f=(type,hz,db,q)=>{const n=c.createBiquadFilter();n.type=type;n.frequency.value=hz;n.gain.value=db;if(q)n.Q.value=q;return n};
+  const shelf=f('lowshelf',220,1.5),bank=[226,453,905,1810,3620,7240].map(hz=>f('peaking',hz,0,1.1)),pres=f('peaking',3400,2,1.1),des=f('peaking',7200,-3,1.4);
+  const k=c.createDynamicsCompressor();k.threshold.value=-26;k.ratio.value=2.2;k.knee.value=12;k.attack.value=.005;k.release.value=.1;
+  const g=c.createGain();g.gain.value=.9;
+  const nodes=[shelf,...bank,pres,des,k,g];nodes.forEach((n,i)=>{if(i<nodes.length-1)n.connect(nodes[i+1])});g.connect(c.destination);
+  EQ={shelf,bank,pres,des};applyMatch();return shelf;
+}
+function applyMatch(){
+  if(!EQ)return;
+  if(matchOn&&mt&&mt.gains){EQ.shelf.gain.value=0;EQ.pres.gain.value=0;EQ.des.gain.value=0;mt.gains.forEach((g,i)=>{EQ.bank[i].gain.value=g})}
+  else{EQ.shelf.gain.value=1.5;EQ.pres.gain.value=2;EQ.des.gain.value=-3;EQ.bank.forEach(n=>n.gain.value=0)}
+}
+/* tune the neural voice toward the recording: pitch (gently) and tone (half-strength) */
+function calibrate(buf){
+  if(mt&&mt.done)return;
+  const y=buf.getChannelData(0),f=MATCH.f0(y,buf.sampleRate),b=MATCH.bands(y,buf.sampleRate);
+  if(!f||!b)return;cal.f.push(f);cal.b.push(b);
+  const fm=MATCH.median(cal.f),bm=b.map((_,i)=>MATCH.median(cal.b.map(x=>x[i])));
+  const ratio=Math.min(1.05,Math.max(.95,Math.pow(REFM.f0/fm,.5)));
+  const gains=[1,2,3,4,5,6].map(i=>Math.max(-4,Math.min(4,.5*(REFM.bands[i]-bm[i]))));
+  mt={ratio,gains,f0:Math.round(fm),done:cal.f.length>=3};
+  try{localStorage.setItem('jv-match',JSON.stringify(mt))}catch(e){}
+  applyMatch();
+  if(mt.done){ST.v=ST.v.replace(/ · matched.*$/,'')+' · matched to your recording (voice '+mt.f0+' Hz, yours about '+Math.round(REFM.f0)+' Hz, shifted '+((ratio-1)*100).toFixed(1)+'%)';status()}
+}
+function stopAll(){
+  nvGen++;nvSrc.forEach(s=>{try{s.onended=null;s.stop()}catch(e){}});nvSrc=[];
+  if(src){try{src.onended=null;src.stop()}catch(e){}}
+  setS('idle');
+}
+function speakFormant(t){
+  try{
+    const c=audio(),pcm=VX.say(t.slice(0,700),105),b=c.createBuffer(1,pcm.length,VX.FS);
+    b.copyToChannel(pcm,0);src=c.createBufferSource();src.buffer=b;src.connect(c.destination);
+    src.onended=()=>setS('idle');setS('speak');src.start();
+  }catch(e){add('j','Voice error: '+short(e))}
+}
+let wl=null;
+async function keepAwake(on){try{if(on&&navigator.wakeLock&&!wl)wl=await navigator.wakeLock.request('screen');else if(!on&&wl){await wl.release();wl=null}}catch(e){wl=null}}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+/*WSOLA_START*/
+/* speeds speech up (f>1) or slows it (f<1) without changing the pitch */
+function stretch(x,sr,f){
+  if(f<1.03&&f>.97)return x;
+  const n=x.length,N=Math.round(sr*.032)&~1,Hs=N>>1,Ha=Math.round(Hs*f),D=Math.round(sr*.008);
+  const outLen=Math.ceil(n/f)+2*N,out=new Float32Array(outLen),ws=new Float32Array(outLen),win=new Float32Array(N);
+  for(let i=0;i<N;i++)win[i]=.5-.5*Math.cos(2*Math.PI*(i+.5)/N);
+  let prev=0;
+  for(let m=0,o=0;;m++,o+=Hs){
+    const nominal=m*Ha;if(nominal+N+D>=n)break;
+    let pos=nominal;
+    if(m>0){
+      const tgt=prev+Hs;
+      if(tgt+N<n){
+        let best=-1e30,bo=nominal;const lo=Math.max(0,nominal-D),hi=Math.min(n-N,nominal+D);
+        for(let c=lo;c<=hi;c+=2){let s=0;for(let i=0;i<N;i+=4)s+=x[c+i]*x[tgt+i];if(s>best){best=s;bo=c}}
+        pos=bo;
+      }
+    }
+    for(let i=0;i<N;i++){const w=win[i];out[o+i]+=x[pos+i]*w;ws[o+i]+=w}
+    prev=pos;
+  }
+  const len=Math.min(Math.floor(n/f),outLen-N),y=new Float32Array(len);
+  for(let i=0;i<len;i++)y[i]=ws[i]>1e-3?out[i]/ws[i]:0;
+  return y;
+}
+/*WSOLA_END*/
+
+let nvChain=Promise.resolve(),nvT=0;
+function sayStart(){stopAll();const my=nvGen,c=audio();chain=chain||buildChain(c);nvChain=Promise.resolve();nvT=c.currentTime+.05;return my}
+function sayPush(text,my){
+  const c=audio(),parts=natural(text).split(/(?<=[.!?])\s+/).filter(x=>/\w/.test(x));
+  for(const sent of parts){
+    nvChain=nvChain.then(async()=>{
+      if(my!==nvGen)return;
+      try{
+        const wav=await nv.predict({text:sent,voiceId:voiceId()});if(my!==nvGen)return;
+        const buf=await c.decodeAudioData(await wav.arrayBuffer());if(my!==nvGen)return;
+        if(matchOn)calibrate(buf);
+        let pb=buf;
+        if(speed>1.03||speed<.97){const y=stretch(buf.getChannelData(0),buf.sampleRate,speed);pb=c.createBuffer(1,y.length,buf.sampleRate);pb.copyToChannel(y,0)}
+        if(my!==nvGen)return;
+        const rate=matchOn&&mt?mt.ratio:1,sc=c.createBufferSource();sc.buffer=pb;sc.playbackRate.value=rate;sc.connect(chain);
+        const st=Math.max(nvT,c.currentTime+.03);sc.start(st);nvT=st+pb.duration/rate+.2;nvSrc.push(sc);setS('speak');
+      }catch(e){nvReady=false;ST.v='Voice: built-in (neural failed: '+short(e)+')';status();if(my===nvGen)speakFormant(sent)}
+    });
+  }
+}
+function sayEnd(my){nvChain.then(()=>{if(my!==nvGen)return;const last=nvSrc[nvSrc.length-1];if(last)last.onended=()=>{if(my===nvGen)setS('idle')};else setS('idle')})}
+function speak(t){
+  if(!voiceOn||!t)return;
+  if(nvReady){const my=sayStart();sayPush(t,my);sayEnd(my)}
+  else{stopAll();speakFormant(t)}
+}
+/* ---------- the voice engine saves its model with the Origin Private File System. A sandboxed page (like an
+   in-app HTML viewer) is denied that, so this stand-in keeps the same files in memory instead ---------- */
+function installMemoryOPFS(){
+  const nf=n=>new DOMException('A requested file or directory could not be found ('+n+')','NotFoundError');
+  class FileH{constructor(n){this.kind='file';this.name=n;this._b=new Blob([])}
+    async getFile(){return new File([this._b],this.name,{type:this._b.type})}
+    async createWritable(){const st=this;let parts=[];return {async write(d){if(d&&d.type==='write')d=d.data;parts.push(d instanceof Blob?d:new Blob([d]))},async seek(){},async truncate(){parts=[]},async close(){st._b=new Blob(parts)},async abort(){}}}
+    async isSameEntry(o){return o===this}}
+  class DirH{constructor(n){this.kind='directory';this.name=n;this._m=new Map()}
+    async getDirectoryHandle(n,o){let e=this._m.get(n);if(!e){if(o&&o.create){e=new DirH(n);this._m.set(n,e)}else throw nf(n)}if(e.kind!=='directory')throw new DOMException('Type mismatch','TypeMismatchError');return e}
+    async getFileHandle(n,o){let e=this._m.get(n);if(!e){if(o&&o.create){e=new FileH(n);this._m.set(n,e)}else throw nf(n)}if(e.kind!=='file')throw new DOMException('Type mismatch','TypeMismatchError');return e}
+    async removeEntry(n){if(!this._m.delete(n))throw nf(n)}
+    async *entries(){for(const e of this._m)yield e}
+    async *keys(){for(const k of this._m.keys())yield k}
+    async *values(){for(const v of this._m.values())yield v}
+    [Symbol.asyncIterator](){return this.entries()}
+    async isSameEntry(o){return o===this}}
+  const root=new DirH(''),gd=async()=>root;
+  try{Object.defineProperty(navigator.storage,'getDirectory',{value:gd,configurable:true});return true}catch(e){}
+  try{Object.defineProperty(navigator,'storage',{value:{getDirectory:gd,estimate:async()=>({usage:0,quota:0}),persist:async()=>false},configurable:true});return true}catch(e){return false}
+}
+async function startVoice(){
+  ST.v='Voice: loading';status();keepAwake(true);
+  try{
+    let memOpfs=false;
+    try{await navigator.storage.getDirectory()}catch(e){memOpfs=installMemoryOPFS()}
+    nv=await import('https://cdn.jsdelivr.net/npm/@mintplex-labs/piper-tts-web@1.0.4/+esm');
+    await nv.download(voiceId(),p=>{if(p&&p.total){ST.v='Voice: downloading '+Math.round(p.loaded*100/p.total)+'%'+(memOpfs?' (storage blocked: repeats every launch)':'');status()}});
+    nvReady=true;ST.v='Voice: neural British'+(memOpfs?' (storage blocked)':'');add('j','Neural voice ready, '+sir()+'. Say “test voice” to hear it.');
+  }catch(e){ST.v='Voice: built-in (neural failed: '+short(e)+')'}
+  keepAwake(false);status();
+}
+
+/* ---------- voice in ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null;
+$('#mic').onclick=()=>{
+  if(rec){try{rec.stop()}catch(e){}return}
+  if(!SR){add('j','Voice input isn’t available in this browser. Typing works everywhere.');return}
+  rec=new SR();rec.lang=navigator.language||'en-US';rec.interimResults=false;
+  rec.onstart=()=>setS('listen');
+  rec.onresult=e=>handle(e.results[0][0].transcript);
+  rec.onerror=e=>{setS('idle');add('j',({'not-allowed':'Microphone is blocked. Allow it from the lock icon in Chrome’s address bar.','service-not-allowed':'Chrome’s speech service is blocked on this device.','network':'Chrome’s voice input needs a connection. Typing stays offline.','no-speech':'I didn’t hear anything.','audio-capture':'No microphone found.'})[e.error]||'Voice input error: '+e.error)};
+  rec.onend=()=>{rec=null;if(document.body.dataset.s==='listen')setS('idle')};
+  try{rec.start()}catch(e){rec=null;add('j','Couldn’t start the microphone: '+short(e))}
+};
+
+/* ---------- timers ---------- */
+function beep(){try{const a=audio(),o=a.createOscillator(),g=a.createGain();o.frequency.value=880;g.gain.value=.15;o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.4)}catch(e){}}
+function timer(sec,label){
+  setTimeout(()=>{const m=label?`${cap(sir())}, time to ${label}.`:`${cap(sir())}, your timer is done.`;add('j',m);speak(m);beep();navigator.vibrate&&navigator.vibrate([300,150,300])},sec*1000);
+}
+const human=s=>s>=3600?`${+(s/3600).toFixed(1)} hour(s)`:s>=60?`${+(s/60).toFixed(1)} minute(s)`:`${s} second(s)`;
+
+/*MATH_START*/
+const MATHX=(()=>{
+  const UN={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19};
+  const TN={twenty:20,thirty:30,forty:40,fourty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90};
+  const SC={thousand:1e3,million:1e6,billion:1e9,trillion:1e12};
+  const core=x=>x.replace(/[,?!.;:]+$/,'').toLowerCase(),suf=x=>(x.match(/[,?!.;:]+$/)||[''])[0];
+  function seq(w,i){
+    let total=0,cur=0,j=i,any=false,ls='';
+    while(j<w.length){
+      const t=core(w[j]);
+      if(t in UN){cur+=UN[t];any=true}
+      else if(t in TN){cur+=TN[t];any=true}
+      else if(t==='hundred'){cur=(cur||1)*100;any=true}
+      else if(t in SC){total+=(cur||1)*SC[t];cur=0;any=true}
+      else if(t==='and'&&any&&j+1<w.length&&(core(w[j+1]) in UN||core(w[j+1]) in TN)&&/^(hundred|thousand|million|billion|trillion)$/.test(core(w[j-1]||''))){j++;continue}
+      else break;
+      ls=suf(w[j]);j++;if(ls)break;
+    }
+    if(!any)return null;
+    let val=total+cur;
+    if(!ls&&j<w.length&&core(w[j])==='point'){let k=j+1,ds='',s2='';
+      while(k<w.length&&(core(w[k]) in UN)&&UN[core(w[k])]<10){ds+=UN[core(w[k])];s2=suf(w[k]);k++;if(s2)break}
+      if(ds){val=parseFloat(val+'.'+ds);j=k;ls=s2}}
+    return {val,next:j,suf:ls};
+  }
+  function words2digits(s){
+    s=s.replace(/\b(twenty|thirty|forty|fourty|fifty|sixty|seventy|eighty|ninety)-(one|two|three|four|five|six|seven|eight|nine)\b/gi,'$1 $2');
+    s=s.replace(/\b(a|an) (hundred|thousand|million|billion|trillion)\b/gi,'one $2');
+    const w=s.split(/\s+/),out=[];
+    for(let i=0;i<w.length;){const r=seq(w,i);if(r){out.push(String(r.val)+r.suf);i=r.next}else{out.push(w[i]);i++}}
+    return out.join(' ');
+  }
+  /* ---------- number formatting ---------- */
+  const clean=v=>parseFloat(v.toPrecision(12));
+  function fmt(v){
+    if(!isFinite(v))return 'undefined';
+    v=clean(v);
+    if(v!==0&&(Math.abs(v)>=1e15||Math.abs(v)<1e-9))return v.toExponential(6).replace(/\.?0+e/,'e').replace('e+','e');
+    let s=Number.isInteger(v)?String(v):String(parseFloat(v.toFixed(10)));
+    const [a,b]=s.split('.');
+    return a.replace(/\B(?=(\d{3})+(?!\d))/g,',')+(b?'.'+b:'');
+  }
+  const fmtSay=v=>{if(!isFinite(v))return 'undefined';v=clean(v);return Number.isInteger(v)?String(v):String(parseFloat(v.toFixed(6)))};
+  /* ---------- expression parser ---------- */
+  const CONST={pi:Math.PI,e:Math.E,tau:2*Math.PI};
+  const fact=n=>{if(n<0||!Number.isInteger(n)||n>170)throw new Error('factorial');let r=1;for(let i=2;i<=n;i++)r*=i;return r};
+  const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a};
+  const FN={sqrt:Math.sqrt,cbrt:Math.cbrt,sin:Math.sin,cos:Math.cos,tan:Math.tan,asin:Math.asin,acos:Math.acos,atan:Math.atan,ln:Math.log,log:Math.log10,log10:Math.log10,log2:Math.log2,
+    exp:Math.exp,abs:Math.abs,round:Math.round,floor:Math.floor,ceil:Math.ceil,fact:fact,logb:(b,x)=>Math.log(x)/Math.log(b),root:(n,x)=>Math.sign(x)<0&&n%2?-Math.pow(-x,1/n):Math.pow(x,1/n),
+    pow:Math.pow,min:Math.min,max:Math.max,gcd:gcd,lcm:(a,b)=>Math.abs(a*b)/gcd(a,b),choose:(n,k)=>fact(n)/(fact(k)*fact(n-k)),perm:(n,k)=>fact(n)/fact(n-k)};
+  function tokenize(s){
+    const t=[];let i=0;
+    while(i<s.length){
+      const c=s[i];if(/\s/.test(c)){i++;continue}
+      const rest=s.slice(i);let m;
+      if(m=/^(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?:e[+-]?\d+)?|^\.\d+/.exec(rest)){t.push({k:'n',v:parseFloat(m[0].replace(/,/g,''))});i+=m[0].length;continue}
+      if(m=/^[a-z_][a-z0-9_]*/.exec(rest)){t.push({k:'id',v:m[0]});i+=m[0].length;continue}
+      if('+-*/^%!(),'.includes(c)){t.push({k:'op',v:c});i++;continue}
+      if(c==='×'){t.push({k:'op',v:'*'});i++;continue}
+      if(c==='÷'){t.push({k:'op',v:'/'});i++;continue}
+      throw new Error('char');
+    }
+    return t;
+  }
+  function evalTokens(tk,vars){
+    let p=0;
+    const peek=()=>tk[p],nxt=()=>tk[p++],isOp=v=>peek()&&peek().k==='op'&&peek().v===v;
+    const startsOperand=t=>t&&(t.k==='n'||t.k==='id'||(t.k==='op'&&t.v==='('));
+    const div0=()=>{throw new Error('div0')};
+    function expr(){let l=term();
+      while(peek()&&peek().k==='op'&&(peek().v==='+'||peek().v==='-')){const op=nxt().v;let r=term();if(r.pct)r={v:l.v*r.v};l={v:op==='+'?l.v+r.v:l.v-r.v}}
+      return l}
+    function term(){let l=unary();
+      for(;;){const t=peek();
+        if(t&&t.k==='op'&&(t.v==='*'||t.v==='/')){nxt();const r=unary();l={v:t.v==='*'?l.v*r.v:(r.v===0?div0():l.v/r.v)}}
+        else if(t&&t.k==='id'&&t.v==='mod'){nxt();const r=unary();if(r.v===0)div0();l={v:((l.v%r.v)+r.v)%r.v}}
+        else if(t&&t.k==='op'&&t.v==='%'&&startsOperand(tk[p+1])){nxt();const r=unary();if(r.v===0)div0();l={v:((l.v%r.v)+r.v)%r.v}}
+        else if(t&&((t.k==='id'&&t.v!=='mod')||(t.k==='op'&&t.v==='('))){const r=power();l={v:l.v*r.v}}
+        else break}
+      return l}
+    function unary(){if(isOp('-')){nxt();return {v:-unary().v}}if(isOp('+')){nxt();return unary()}return power()}
+    function power(){const b=postfix();if(isOp('^')){nxt();const e=unary();return {v:Math.pow(b.v,e.v)}}return b}
+    function postfix(){let x=primary();
+      for(;;){if(isOp('!')){nxt();x={v:fact(x.v)}}else if(isOp('%')&&!startsOperand(tk[p+1])){nxt();x={v:x.v/100,pct:true}}else break}
+      return x}
+    function primary(){
+      const t=nxt();if(!t)throw new Error('end');
+      if(t.k==='n')return {v:t.v};
+      if(t.k==='op'&&t.v==='('){const e=expr();if(!isOp(')'))throw new Error('paren');nxt();return e}
+      if(t.k==='id'){
+        if(vars&&t.v in vars)return {v:vars[t.v]};
+        if(t.v in CONST)return {v:CONST[t.v]};
+        if(t.v in FN){let a;
+          if(isOp('(')){nxt();a=[];if(!isOp(')')){a.push(expr().v);while(isOp(',')){nxt();a.push(expr().v)}}if(!isOp(')'))throw new Error('paren');nxt()}
+          else a=[unary().v];
+          return {v:FN[t.v](...a)}}
+      }
+      throw new Error('token');
+    }
+    const r=expr();if(p<tk.length)throw new Error('trailing');return r.v;
+  }
+  const evalStr=(s,vars)=>evalTokens(tokenize(s),vars);
+  /* ---------- units ---------- */
+  const UNITS={};
+  const def=(dim,base,list)=>{for(const [names,f] of list){const n=names.split('|');for(const a of n)UNITS[a]={dim,f,name:n[0]}}};
+  def('len',1,[['metres|metre|meters|meter|m',1],['kilometres|kilometre|kilometers|kilometer|km',1000],['centimetres|centimetre|centimeters|centimeter|cm',.01],['millimetres|millimetre|millimeters|millimeter|mm',.001],
+    ['miles|mile|mi',1609.344],['yards|yard|yd|yds',.9144],['feet|foot|ft',.3048],['inches|inch|in',.0254]]);
+  def('mass',1,[['kilograms|kilogram|kilos|kilo|kg|kgs',1],['grams|gram|g',.001],['milligrams|milligram|mg',1e-6],['pounds|pound|lbs|lb',.45359237],['ounces|ounce|oz',.028349523125],['stone|st',6.35029318],['tonnes|tonne|metric tons|metric ton',1000],['tons|ton',907.18474]]);
+  def('vol',1,[['litres|litre|liters|liter|l',1],['millilitres|millilitre|milliliters|milliliter|ml',.001],['gallons|gallon|gal',3.785411784],['quarts|quart|qt',.946352946],['pints|pint|pt',.473176473],['cups|cup',.2365882365],['fluid ounces|fluid ounce|fl oz|floz',.0295735295625],['tablespoons|tablespoon|tbsp',.01478676478125],['teaspoons|teaspoon|tsp',.00492892159375]]);
+  def('speed',1,[['metres per second|meters per second|m/s',1],['kilometres per hour|kilometers per hour|km/h|kph|kmh',1/3.6],['miles per hour|mph',.44704],['knots|knot|kn',.514444444],['feet per second|ft/s|fps',.3048]]);
+  def('time',1,[['seconds|second|secs|sec|s',1],['minutes|minute|mins|min',60],['hours|hour|hrs|hr|h',3600],['days|day',86400],['weeks|week',604800],['years|year|yrs|yr',31536000]]);
+  def('data',1,[['bytes|byte',1],['bits|bit',.125],['kilobytes|kilobyte|kb',1e3],['megabytes|megabyte|mb',1e6],['gigabytes|gigabyte|gb',1e9],['terabytes|terabyte|tb',1e12]]);
+  const TEMPS={celsius:'c',centigrade:'c',c:'c',fahrenheit:'f',f:'f',kelvin:'k',k:'k'};
+  const unitOf=u=>{u=u.trim().replace(/^degrees? /,'').replace(/^of /,'').replace(/\s+/g,' ');return UNITS[u]||UNITS[u.replace(/s$/,'')]||null};
+  const tempOf=u=>{const k=u.trim().replace(/^degrees? /,'').replace(/°/,'');return TEMPS[k]||TEMPS[k.replace(/s$/,'')]||null};
+  const TN2={c:'°C',f:'°F',k:'K'};
+  const nm=(name,v)=>{if(Math.abs(clean(v))!==1)return name;if(name==='feet')return 'foot';if(/ches$/.test(name))return name.slice(0,-2);return /s$/.test(name)?name.replace(/s$/,''):name};
+  function convert(n,a,b){
+    const ta=tempOf(a),tb=tempOf(b);
+    if(ta&&tb){let c=ta==='c'?n:ta==='f'?(n-32)*5/9:n-273.15;const r=tb==='c'?c:tb==='f'?c*9/5+32:c+273.15;
+      return {text:`${fmt(n)} ${TN2[ta]} = ${fmt(r)} ${TN2[tb]}`,say:`${fmtSay(n)} degrees ${ta==='c'?'Celsius':ta==='f'?'Fahrenheit':'kelvin'} is ${fmtSay(r)} degrees ${tb==='c'?'Celsius':tb==='f'?'Fahrenheit':'kelvin'}`}}
+    const ua=unitOf(a),ub=unitOf(b);
+    if(!ua||!ub||ua.dim!==ub.dim)return null;
+    const r=n*ua.f/ub.f;
+    return {text:`${fmt(n)} ${nm(ua.name,n)} = ${fmt(r)} ${nm(ub.name,r)}`,say:`${fmtSay(n)} ${nm(ua.name,n)} is ${fmtSay(r)} ${nm(ub.name,r)}`};
+  }
+  /* ---------- templates ---------- */
+  const NUM='(-?(?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d+)?|-?\\.\\d+)';
+  const num=s=>parseFloat(s.replace(/,/g,''));
+  const rx=(s)=>new RegExp('^'+s.replace(/N/g,NUM)+'$');
+  const isPrime=n=>{if(n<2||!Number.isInteger(n))return false;for(let i=2;i*i<=n;i++)if(n%i===0)return false;return true};
+  function primeFactors(n){const f=[];let m=n;for(let i=2;i*i<=m;i++){while(m%i===0){f.push(i);m/=i}}if(m>1)f.push(m);return f}
+  function normalise(t){
+    let s=' '+t.toLowerCase().replace(/[’‘]/g,"'").replace(/[$£€]/g,'').replace(/\s+/g,' ').trim()+' ';
+    s=s.replace(/%/g,' percent ').replace(/\bper ?cent\b/g,' percent ').replace(/\bpercentage\b/g,' percent ');
+    s=words2digits(s.trim());
+    s=' '+s+' ';
+    for(let i=0;i<3;i++)s=s.replace(/^\s*(?:hey |ok |okay |please )?(?:jarvis[,.]?\s*)?(?:what(?:'s| is| are| was|s)?|calculate|compute|work out|figure out|how much (?:is|are)|tell me|can you (?:tell me |work out |calculate )?|could you (?:tell me |work out |calculate )?|i need to know|find|evaluate|give me|whats)\s+/,' ');
+    s=s.replace(/\s*(?:please|thanks|thank you|equals|is equal to|the answer|as a decimal|in decimal)\s*$/,' ').replace(/\s*(?:\?+|\.+|(?<!\d)!+)\s*$/,'');
+    s=s.replace(/\s+/g,' ').trim();
+    return s;
+  }
+  function A(text,say){return {text,say}}
+  function templates(q,who){
+    let m;
+    if(m=q.match(rx('N percent of N'))){const p=num(m[1]),n=num(m[2]);return A(`${fmt(p)}% of ${fmt(n)} = ${fmt(p*n/100)}`,`${fmtSay(p*n/100)}`)}
+    if(m=q.match(rx('what percent of N is N'))||q.match(rx('percent of N is N'))){const n=num(m[1]),x=num(m[2]);if(n===0)throw new Error('div0');return A(`${fmt(x)} is ${fmt(x/n*100)}% of ${fmt(n)}`,`${fmtSay(x/n*100)} percent`)}
+    if(m=q.match(rx('N is what percent of N'))||q.match(rx('what percent is N of N'))){const x=num(m[1]),n=num(m[2]);if(n===0)throw new Error('div0');return A(`${fmt(x)} is ${fmt(x/n*100)}% of ${fmt(n)}`,`${fmtSay(x/n*100)} percent`)}
+    if(m=q.match(rx('(?:increase|raise|add) N by N percent'))){const n=num(m[1]),p=num(m[2]);return A(`${fmt(n)} + ${fmt(p)}% = ${fmt(n*(1+p/100))}`,fmtSay(n*(1+p/100)))}
+    if(m=q.match(rx('(?:decrease|reduce|lower|discount|subtract) N by N percent'))){const n=num(m[1]),p=num(m[2]);return A(`${fmt(n)} − ${fmt(p)}% = ${fmt(n*(1-p/100))}`,fmtSay(n*(1-p/100)))}
+    if(m=q.match(rx('N percent off(?: of)? N'))){const p=num(m[1]),n=num(m[2]);return A(`${fmt(n)} with ${fmt(p)}% off = ${fmt(n*(1-p/100))}`,fmtSay(n*(1-p/100)))}
+    if(m=q.match(rx('(?:a |the )?tip (?:on|for) N(?: at| of)? N percent'))){const n=num(m[1]),p=num(m[2]),tip=n*p/100;return A(`Tip ${fmt(tip)}, total ${fmt(n+tip)}`,`The tip is ${fmtSay(tip)}, making ${fmtSay(n+tip)} in total`)}
+    if(m=q.match(rx('split N (?:among|between|by|ways|with|into) N(?: people| ways| friends)?'))){const n=num(m[1]),k=num(m[2]);if(k===0)throw new Error('div0');return A(`${fmt(n)} ÷ ${fmt(k)} = ${fmt(n/k)} each`,`${fmtSay(n/k)} each`)}
+    if(m=q.match(/^(?:the )?(average|mean|median|sum|total|max|maximum|min|minimum|product|range|largest|smallest|biggest) (?:of |between )?(.+)$/)){
+      const body=m[2],re=/-?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?/g,nums=(body.match(re)||[]).map(num);
+      if(nums.length>=2&&body.replace(re,'').replace(/[\s,]|and/g,'')===''){
+        const k=m[1],sum=nums.reduce((a,b)=>a+b,0),s=[...nums].sort((a,b)=>a-b);
+        let v,label;
+        if(k==='average'||k==='mean'){v=sum/nums.length;label='Average'}
+        else if(k==='median'){const h=s.length>>1;v=s.length%2?s[h]:(s[h-1]+s[h])/2;label='Median'}
+        else if(k==='sum'||k==='total'){v=sum;label='Sum'}
+        else if(/^(max|maximum|largest|biggest)$/.test(k)){v=s[s.length-1];label='Largest'}
+        else if(/^(min|minimum|smallest)$/.test(k)){v=s[0];label='Smallest'}
+        else if(k==='product'){v=nums.reduce((a,b)=>a*b,1);label='Product'}
+        else{v=s[s.length-1]-s[0];label='Range'}
+        return A(`${label} of ${nums.map(fmt).join(', ')} = ${fmt(v)}`,fmtSay(v))}}
+    if(m=q.match(rx('(?:the )?square root of N'))){const n=num(m[1]);if(n<0)return A('There is no real square root of a negative number',`There is no real square root of a negative number, ${who}.`);return A(`√${fmt(n)} = ${fmt(Math.sqrt(n))}`,fmtSay(Math.sqrt(n)))}
+    if(m=q.match(rx('(?:the )?cube root of N'))){const n=num(m[1]);return A(`∛${fmt(n)} = ${fmt(Math.cbrt(n))}`,fmtSay(Math.cbrt(n)))}
+    if(m=q.match(rx('(?:the )?(\\d+)(?:st|nd|rd|th) root of N'))){const k=num(m[1]),n=num(m[2]);const v=FN.root(k,n);return A(`${k}th root of ${fmt(n)} = ${fmt(v)}`,fmtSay(v))}
+    if(m=q.match(rx('(?:the )?(square|cube) of N'))){const n=num(m[2]),v=m[1]==='square'?n*n:n*n*n;return A(`${fmt(n)}${m[1]==='square'?'²':'³'} = ${fmt(v)}`,fmtSay(v))}
+    if(m=q.match(rx('N factorial'))||q.match(rx('factorial of N'))){const v=fact(num(m[1]));return A(`${fmt(num(m[1]))}! = ${fmt(v)}`,fmtSay(v))}
+    if(m=q.match(rx('N (?:choose|c) N'))){const v=FN.choose(num(m[1]),num(m[2]));return A(`${fmt(num(m[1]))} choose ${fmt(num(m[2]))} = ${fmt(v)}`,fmtSay(v))}
+    if(m=q.match(rx('natural log(?:arithm)? of N'))||q.match(rx('ln of N'))){const n=num(m[1]);return A(`ln(${fmt(n)}) = ${fmt(Math.log(n))}`,fmtSay(Math.log(n)))}
+    if(m=q.match(rx('log(?:arithm)? base N of N'))){const b=num(m[1]),n=num(m[2]);const v=Math.log(n)/Math.log(b);return A(`log base ${fmt(b)} of ${fmt(n)} = ${fmt(v)}`,fmtSay(v))}
+    if(m=q.match(rx('log(?:arithm)?(?: base 10)? of N'))){const n=num(m[1]);return A(`log(${fmt(n)}) = ${fmt(Math.log10(n))}`,fmtSay(Math.log10(n)))}
+    if(m=q.match(rx('(sin|cos|tan|sine|cosine|tangent)(?: of)? N(?: (degrees?|radians?))?'))){
+      const fnn={sin:'sin',sine:'sin',cos:'cos',cosine:'cos',tan:'tan',tangent:'tan'}[m[1]],n=num(m[2]),rad=m[3]&&/^radian/.test(m[3]);
+      const x=rad?n:n*Math.PI/180;let v=Math[fnn](x);if(Math.abs(v)<1e-12)v=0;if(fnn==='tan'&&Math.abs(Math.cos(x))<1e-12)return A('Tangent is undefined there','Tangent is undefined at that angle');
+      return A(`${fnn}(${fmt(n)}${rad?' rad':'°'}) = ${fmt(v)}`,fmtSay(v))}
+    if(m=q.match(rx('(?:the )?(?:absolute value|abs) of N'))){const n=num(m[1]);return A(`|${fmt(n)}| = ${fmt(Math.abs(n))}`,fmtSay(Math.abs(n)))}
+    if(m=q.match(/^(gcd|hcf|greatest common (?:divisor|factor)|lcm|least common multiple|lowest common multiple)(?: of)? (.+)$/)){
+      const nums=(m[2].match(/\d+/g)||[]).map(Number);
+      if(nums.length>=2&&m[2].replace(/\d+/g,'').replace(/[\s,]|and/g,'')===''){
+        const isG=/^(gcd|hcf|greatest)/.test(m[1]);const v=nums.reduce((a,b)=>isG?gcd(a,b):FN.lcm(a,b));
+        return A(`${isG?'GCD':'LCM'} of ${nums.join(', ')} = ${fmt(v)}`,fmtSay(v))}}
+    if(m=q.match(rx('is N (?:a )?prime(?: number)?'))){const n=num(m[1]);return A(`${fmt(n)} is ${isPrime(n)?'':'not '}a prime number`,`${fmtSay(n)} is ${isPrime(n)?'':'not '}prime`)}
+    if(m=q.match(rx('(?:the )?prime factors? of N'))||q.match(rx('factor(?:ize|ise)? N'))){const n=num(m[1]);if(n<2||!Number.isInteger(n))return null;const f=primeFactors(n);return A(`${fmt(n)} = ${f.join(' × ')}`,`${fmtSay(n)} is ${f.join(' times ')}`)}
+    if(m=q.match(rx('is N (even|odd)'))){const n=num(m[1]),ev=n%2===0;return A(`${fmt(n)} is ${ev?'even':'odd'}`,`${fmtSay(n)} is ${ev?'even':'odd'}`.replace(/^/,'')+(m[2]===(ev?'even':'odd')?', yes':', no'))}
+    if(m=q.match(rx('(?:the )?remainder (?:of|when) N (?:divided by|/|over|÷) N'))){const a=num(m[1]),b=num(m[2]);if(b===0)throw new Error('div0');return A(`${fmt(a)} mod ${fmt(b)} = ${fmt(((a%b)+b)%b)}`,`${fmtSay(((a%b)+b)%b)}`)}
+    if(m=q.match(rx('half(?: of)? N'))){const n=num(m[1]);return A(`½ × ${fmt(n)} = ${fmt(n/2)}`,fmtSay(n/2))}
+    if(m=q.match(rx('(double|twice|triple|thrice)(?: of)? N'))){const n=num(m[2]),k=/^(double|twice)/.test(m[1])?2:3;return A(`${k} × ${fmt(n)} = ${fmt(n*k)}`,fmtSay(n*k))}
+    if(m=q.match(rx('(?:a |one )?(third|quarter|fifth|tenth) of N'))){const k={third:3,quarter:4,fifth:5,tenth:10}[m[1]],n=num(m[2]);return A(`${fmt(n)} ÷ ${k} = ${fmt(n/k)}`,fmtSay(n/k))}
+    if(m=q.match(rx('divide N by N'))){const a=num(m[1]),b=num(m[2]);if(b===0)throw new Error('div0');return A(`${fmt(a)} ÷ ${fmt(b)} = ${fmt(a/b)}`,fmtSay(a/b))}
+    if(m=q.match(rx('multiply N (?:by|and|with) N'))){const a=num(m[1]),b=num(m[2]);return A(`${fmt(a)} × ${fmt(b)} = ${fmt(a*b)}`,fmtSay(a*b))}
+    if(m=q.match(rx('add N (?:and|to|with|plus) N'))){const a=num(m[1]),b=num(m[2]);return A(`${fmt(a)} + ${fmt(b)} = ${fmt(a+b)}`,fmtSay(a+b))}
+    if(m=q.match(rx('subtract N from N'))){const a=num(m[1]),b=num(m[2]);return A(`${fmt(b)} − ${fmt(a)} = ${fmt(b-a)}`,fmtSay(b-a))}
+    if(m=q.match(rx('round N to (\\d+) decimal(?: places?| points?)?'))){const n=num(m[1]),d=parseInt(m[2]);const v=Math.round(n*Math.pow(10,d))/Math.pow(10,d);return A(`${fmt(n)} ≈ ${v.toFixed(d)}`,fmtSay(v))}
+    // unit conversions
+    if(m=q.match(rx('(?:convert )?N ([a-z°/ ]+?) (?:to|into|in|as) ([a-z°/ ]+)'))){const r=convert(num(m[1]),m[2],m[3]);if(r)return r}
+    if(m=q.match(new RegExp('^how many ([a-z°/ ]+?) (?:are |is )?(?:there )?in (?:an? |one |the )?(?:'+NUM+' )?([a-z°/ ]+)$'))){
+      const n=m[2]===undefined?1:num(m[2]);const r=convert(n,m[3],m[1]);if(r)return r}
+    return undefined;
+  }
+  /* ---------- equations ---------- */
+  function toExprText(s){
+    s=' '+s+' ';
+    s=s.replace(/\bsquare root of\b/g,' sqrt ').replace(/\bcube root of\b/g,' cbrt ');
+    s=s.replace(/\b(?:to the power of|raised to the power of|raised to|to the)\b/g,' ^ ').replace(/\bsquared\b/g,' ^2 ').replace(/\bcubed\b/g,' ^3 ');
+    s=s.replace(/\b(?:multiplied by|times|multiplied|lots of)\b/g,' * ').replace(/(\d|\))\s*x\s*(?=\d|\()/g,'$1 * ');
+    s=s.replace(/\b(?:divided by|divide by|over|divided)\b/g,' / ').replace(/\b(?:plus|added to|and plus)\b/g,' + ').replace(/\b(?:minus|take away|less)\b/g,' - ');
+    s=s.replace(/\bmodulo\b/g,' mod ').replace(/\bpercent\s+of\b/g,'% * ').replace(/\bpercent\b/g,'%').replace(/\b(?:the|a|an)\b/g,' ');
+    return s.replace(/\s+/g,' ').trim();
+  }
+  function solveEquation(raw){
+    let q=raw.toLowerCase().replace(/[’‘]/g,"'").replace(/^\s*(?:jarvis[,.]?\s*)?(?:please )?(?:solve|find|work out)\s*(?:for\s+[a-z]\s*)?:?\s*/,'').replace(/[?!.]+\s*$/,'');
+    if(!q.includes('=')||(q.match(/=/g)||[]).length!==1)return null;
+    q=words2digits(q);
+    const parts=q.split('=').map(x=>toExprText(x.replace(/\^/g,' ^ ').replace(/²/g,'^2')));
+    const ids=new Set();
+    for(const sd of parts){let tk;try{tk=tokenize(sd)}catch(e){return null}for(const t of tk)if(t.k==='id'&&!(t.v in FN)&&!(t.v in CONST)&&t.v!=='mod')ids.add(t.v)}
+    if(ids.size!==1)return null;
+    const v=[...ids][0];
+    const f=x=>{const o={};o[v]=x;return evalStr(parts[0],o)-evalStr(parts[1],o)};
+    let f0,f1,fm,f2,f3;
+    try{f0=f(0);f1=f(1);fm=f(-1);f2=f(2);f3=f(3)}catch(e){return null}
+    const c=f0,a=(f1+fm)/2-c,b=(f1-fm)/2,tol=1e-7*(1+Math.abs(f2)+Math.abs(f3));
+    if(Math.abs(a*4+b*2+c-f2)>tol||Math.abs(a*9+b*3+c-f3)>tol)return null;
+    const z=x=>Math.abs(x)<1e-12?0:x;
+    if(Math.abs(a)<1e-12){
+      if(Math.abs(b)<1e-12)return Math.abs(c)<1e-9?A('Every value works, it is an identity','Every value works'):A('There is no solution','There is no solution');
+      const x=-c/b;return A(`${v} = ${fmt(z(x))}`,`${v} equals ${fmtSay(z(x))}`)}
+    const d=b*b-4*a*c;
+    if(d<0)return A('There are no real solutions','There are no real solutions');
+    if(Math.abs(d)<1e-12){const x=-b/(2*a);return A(`${v} = ${fmt(z(x))}`,`${v} equals ${fmtSay(z(x))}`)}
+    const r1=(-b-Math.sqrt(d))/(2*a),r2=(-b+Math.sqrt(d))/(2*a),lo=Math.min(r1,r2),hi=Math.max(r1,r2);
+    return A(`${v} = ${fmt(z(lo))} or ${v} = ${fmt(z(hi))}`,`${v} equals ${fmtSay(z(lo))} or ${fmtSay(z(hi))}`);
+  }
+  /* ---------- entry point ---------- */
+  function solve(text,who){
+    who=who||'sir';
+    const raw=String(text||'').trim();
+    if(!raw||raw.length>240)return null;
+    try{
+      let eqRaw=raw;
+      if(!/=/.test(eqRaw)&&/\b[xyzn]\b/i.test(eqRaw)&&/\s(?:equals?|is equal to)\s/.test(eqRaw))eqRaw=eqRaw.replace(/\s(?:equals?|is equal to)\s/,' = ');
+      if(/=/.test(eqRaw)){const e=solveEquation(eqRaw);if(e){e.say+=', '+who+'.';return e}}
+      const q=normalise(raw);
+      if(!/\d|pi\b|\be\b/.test(q)&&!/\b(half|double|triple|twice|thrice|quarter|third)\b/.test(q)&&!/^how many .+ in (?:an? |one |the )/.test(q))return null;
+      const t=templates(q,who);
+      if(t){t.say=t.say.replace(/[.]$/,'')+(/, (sir|[A-Z][a-z]+)\.$/.test(t.say)?'':', '+who+'.');return t}
+      if(t===null)return null;
+      // plain expression
+      const ex=toExprText(q);
+      if(!/[+\-*/^%!]|\bmod\b|[a-z]/.test(ex)&&!/\(/.test(ex))return null;
+      if(/^[-+]?[\d.,]+$/.test(ex))return null;
+      const v=evalStr(ex);
+      if(typeof v!=='number'||isNaN(v))return null;
+      if(!isFinite(v))return A('That is undefined','That is undefined, '+who+'.');
+      const pretty=ex.replace(/\*/g,'×').replace(/\//g,'÷').replace(/\s+%/g,'%').replace(/\s+/g,' ');
+      return A(`${pretty} = ${fmt(v)}`,`${fmtSay(v)}, ${who}.`);
+    }catch(e){
+      if(e&&e.message==='div0')return A('Division by zero is undefined',`Division by zero is undefined, ${who}.`);
+      return null;
+    }
+  }
+  return {solve,fmt,words2digits,normalise};
+})();
+/*MATH_END*/
+
+/* ---------- instant answers that never need the brain ---------- */
+const CAPS=Object.fromEntries(`Afghanistan|Kabul;Albania|Tirana;Algeria|Algiers;Andorra|Andorra la Vella;Angola|Luanda;Antigua and Barbuda|Saint John's;Argentina|Buenos Aires;Armenia|Yerevan;Australia|Canberra;Austria|Vienna;Azerbaijan|Baku;Bahamas|Nassau;Bahrain|Manama;Bangladesh|Dhaka;Barbados|Bridgetown;Belarus|Minsk;Belgium|Brussels;Belize|Belmopan;Benin|Porto-Novo;Bhutan|Thimphu;Bolivia|Sucre, with La Paz as the seat of government;Bosnia and Herzegovina|Sarajevo;Botswana|Gaborone;Brazil|Brasília;Brunei|Bandar Seri Begawan;Bulgaria|Sofia;Burkina Faso|Ouagadougou;Burundi|Gitega;Cambodia|Phnom Penh;Cameroon|Yaoundé;Canada|Ottawa;Cape Verde|Praia;Central African Republic|Bangui;Chad|N'Djamena;Chile|Santiago;China|Beijing;Colombia|Bogotá;Comoros|Moroni;Congo|Brazzaville;Democratic Republic of the Congo|Kinshasa;Costa Rica|San José;Côte d'Ivoire|Yamoussoukro;Croatia|Zagreb;Cuba|Havana;Cyprus|Nicosia;Czech Republic|Prague;Denmark|Copenhagen;Djibouti|Djibouti;Dominica|Roseau;Dominican Republic|Santo Domingo;Ecuador|Quito;Egypt|Cairo;El Salvador|San Salvador;Equatorial Guinea|Malabo;Eritrea|Asmara;Estonia|Tallinn;Eswatini|Mbabane;Ethiopia|Addis Ababa;Fiji|Suva;Finland|Helsinki;France|Paris;Gabon|Libreville;Gambia|Banjul;Georgia|Tbilisi;Germany|Berlin;Ghana|Accra;Greece|Athens;Grenada|Saint George's;Guatemala|Guatemala City;Guinea|Conakry;Guinea-Bissau|Bissau;Guyana|Georgetown;Haiti|Port-au-Prince;Honduras|Tegucigalpa;Hungary|Budapest;Iceland|Reykjavik;India|New Delhi;Indonesia|Jakarta;Iran|Tehran;Iraq|Baghdad;Ireland|Dublin;Israel|Jerusalem;Italy|Rome;Jamaica|Kingston;Japan|Tokyo;Jordan|Amman;Kazakhstan|Astana;Kenya|Nairobi;Kiribati|Tarawa;Kosovo|Pristina;Kuwait|Kuwait City;Kyrgyzstan|Bishkek;Laos|Vientiane;Latvia|Riga;Lebanon|Beirut;Lesotho|Maseru;Liberia|Monrovia;Libya|Tripoli;Liechtenstein|Vaduz;Lithuania|Vilnius;Luxembourg|Luxembourg City;Madagascar|Antananarivo;Malawi|Lilongwe;Malaysia|Kuala Lumpur;Maldives|Malé;Mali|Bamako;Malta|Valletta;Marshall Islands|Majuro;Mauritania|Nouakchott;Mauritius|Port Louis;Mexico|Mexico City;Micronesia|Palikir;Moldova|Chișinău;Monaco|Monaco;Mongolia|Ulaanbaatar;Montenegro|Podgorica;Morocco|Rabat;Mozambique|Maputo;Myanmar|Naypyidaw;Namibia|Windhoek;Nauru|Yaren;Nepal|Kathmandu;Netherlands|Amsterdam;New Zealand|Wellington;Nicaragua|Managua;Niger|Niamey;Nigeria|Abuja;North Korea|Pyongyang;North Macedonia|Skopje;Norway|Oslo;Oman|Muscat;Pakistan|Islamabad;Palau|Ngerulmud;Panama|Panama City;Papua New Guinea|Port Moresby;Paraguay|Asunción;Peru|Lima;Philippines|Manila;Poland|Warsaw;Portugal|Lisbon;Qatar|Doha;Romania|Bucharest;Russia|Moscow;Rwanda|Kigali;Saint Kitts and Nevis|Basseterre;Saint Lucia|Castries;Saint Vincent and the Grenadines|Kingstown;Samoa|Apia;San Marino|San Marino;São Tomé and Príncipe|São Tomé;Saudi Arabia|Riyadh;Senegal|Dakar;Serbia|Belgrade;Seychelles|Victoria;Sierra Leone|Freetown;Singapore|Singapore;Slovakia|Bratislava;Slovenia|Ljubljana;Solomon Islands|Honiara;Somalia|Mogadishu;South Africa|Pretoria, with Cape Town and Bloemfontein also serving as capitals;South Korea|Seoul;South Sudan|Juba;Spain|Madrid;Sri Lanka|Sri Jayawardenepura Kotte;Sudan|Khartoum;Suriname|Paramaribo;Sweden|Stockholm;Switzerland|Bern;Syria|Damascus;Taiwan|Taipei;Tajikistan|Dushanbe;Tanzania|Dodoma;Thailand|Bangkok;Timor-Leste|Dili;Togo|Lomé;Tonga|Nukuʻalofa;Trinidad and Tobago|Port of Spain;Tunisia|Tunis;Turkey|Ankara;Turkmenistan|Ashgabat;Tuvalu|Funafuti;Uganda|Kampala;Ukraine|Kyiv;United Arab Emirates|Abu Dhabi;United Kingdom|London;United States|Washington, D.C.;Uruguay|Montevideo;Uzbekistan|Tashkent;Vanuatu|Port Vila;Vatican City|Vatican City;Venezuela|Caracas;Vietnam|Hanoi;Yemen|Sana'a;Zambia|Lusaka;Zimbabwe|Harare`.split(';').map(x=>{const [a,b]=x.split('|');return [a.toLowerCase(),b]}));
+const CAP_ALIAS={usa:'united states',us:'united states','u.s.':'united states','u.s.a.':'united states',america:'united states','united states of america':'united states',uk:'united kingdom',britain:'united kingdom','great britain':'united kingdom',england:'united kingdom',uae:'united arab emirates',czechia:'czech republic','ivory coast':"côte d'ivoire",burma:'myanmar',holland:'netherlands',drc:'democratic republic of the congo',korea:'south korea',swaziland:'eswatini','east timor':'timor-leste',macedonia:'north macedonia','cabo verde':'cape verde',vatican:'vatican city',turkiye:'turkey',türkiye:'turkey',russia:'russia'};
+function capitalOf(l){
+  let m=l.match(/capital(?: city)? of (?:the )?([a-zé'.&\- ]+?)\s*$/)||l.match(/^(?:what(?:'s| is) )?(?:the )?([a-zé'.&\- ]+?)(?:'s| s) capital(?: city)?\s*$/)||l.match(/^(?:what(?:'s| is) )?(?:the )?capital (?:city )?(?:for|in) (?:the )?([a-zé'.&\- ]+?)\s*$/);
+  if(!m)return null;
+  const k=CAP_ALIAS[m[1].trim()]||m[1].trim(),c=CAPS[k];
+  return c?`${c}, ${sir()}.`:null;
+}
+function smallTalk(l){
+  if(/^(hi|hello|hey|yo|good (morning|afternoon|evening))( jarvis)?$/.test(l))return `Hello, ${sir()}. How may I help?`;
+  if(/^(thanks|thank you|thanks jarvis|cheers)( jarvis)?$/.test(l))return `You’re welcome, ${sir()}.`;
+  if(/^(who are you|what are you|what('?s| is) your name)$/.test(l))return `I’m Jarvis, your personal assistant, ${sir()}.`;
+  if(/^how are you( doing)?( today)?$/.test(l))return `All systems are operating within normal parameters, ${sir()}.`;
+  return null;
+}
+/* ---------- Amazon Music ---------- */
+const PLAYLIST_URL='';   // paste your Amazon Music playlist link between the quotes to make it permanent
+let playlistUrl='';try{playlistUrl=localStorage.getItem('jv-playlist')||''}catch(e){}
+function addLink(label,url){const d=add('j','');const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.textContent=label+' (tap to open)';a.style.cssText='color:var(--arc);text-decoration:underline';d.append(a)}
+function openLink(url,label){
+  let w=null;try{w=window.open(url,'_blank')}catch(e){}
+  if(w){try{w.opener=null}catch(e){}return true}
+  addLink(label,url);return false;
+}
+const playUrl=()=>playlistUrl||PLAYLIST_URL||'https://music.amazon.com/my/playlists';
+function savePlaylist(u){
+  playlistUrl=u;let saved=true;
+  try{localStorage.setItem('jv-playlist',u);saved=localStorage.getItem('jv-playlist')===u}catch(e){saved=false}
+  return saved;
+}
+
+/* ---------- offline command engine ---------- */
+async function local(t){
+  const l=t.toLowerCase().trim().replace(/[?!.]+$/,'');let m;
+  if(m=l.match(/^(?:my name is|call me)\s+(.+)/)){M.name=cap(m[1]);save();return `Pleased to meet you, ${M.name}.`}
+  if(m=t.match(/^remember(?: that)?\s+(.+)/i)){M.facts.push(m[1]);save();return 'Noted. I’ll keep that on this device.'}
+  if(/^(what do you (remember|know about me)|show memory)/.test(l))return M.facts.length?'Here’s what I have:\n• '+M.facts.join('\n• '):'Nothing yet. Say “remember that…” to teach me.';
+  if(/^forget (everything|all)/.test(l)){M.facts=[];M.notes=[];save();return 'Memory cleared.'}
+  if(m=t.match(/^note[: ]\s*(.+)/i)){M.notes.push(new Date().toLocaleDateString()+': '+m[1]);save();return 'Note saved.'}
+  if(/^(show |read )?(my )?notes$/.test(l))return M.notes.length?M.notes.map((n,i)=>`${i+1}. ${n}`).join('\n'):'No notes yet. Say “note: …”.';
+  if(m=l.match(/(?:timer|remind me)\D*?(\d+(?:\.\d+)?)\s*(hours?|hrs?|h|minutes?|mins?|m|seconds?|secs?|s)\b(?:\s+(?:to|that)\s+(.+))?/)){
+    const n=parseFloat(m[1]),u=m[2][0],sec=Math.round(n*(u==='h'?3600:u==='m'?60:1)),what=m[3];
+    timer(sec,what);return what?`Understood. I’ll remind you to ${what} in ${human(sec)}.`:`Timer set for ${human(sec)}. Keep this tab open.`;
+  }
+  if(/what('?s| is)? the time|what time is it|^time$/.test(l))return `It’s ${new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}, ${sir()}.`;
+  if(/what('?s| is)? (the )?(date|day)|^(date|today)$/.test(l))return new Date().toLocaleDateString([], {weekday:'long',month:'long',day:'numeric',year:'numeric'})+'.';
+  if(/battery/.test(l)){if(!navigator.getBattery)return 'This browser doesn’t expose battery info.';const b=await navigator.getBattery();return `Battery at ${Math.round(b.level*100)}%${b.charging?', charging':''}.`}
+  if(/flip a coin|coin flip/.test(l))return Math.random()<.5?'Heads.':'Tails.';
+  if(m=l.match(/roll (?:a )?d?(\d+)?/)){const n=+m[1]||6;return `Rolled a ${1+Math.floor(Math.random()*n)} on a d${n}.`}
+  { const mx=MATHX.solve(t,sir());if(mx)return mx }
+  if(m=t.match(/^(?:set|save|change) (?:my )?(?:amazon music )?playlist (?:link )?(?:to )?(https?:\/\/\S+)/i)){
+    return savePlaylist(m[1])?`Playlist saved, ${sir()}. Say “play my playlist” any time.`:`Got it, ${sir()}, but this viewer blocks saving, so I’ll forget it when you close the page. Paste the link into the file to keep it.`}
+  if(/^(play|start|put on|open) (my )?(amazon )?(playlist|music|my music|my songs|my tunes)( on amazon( music)?)?$/.test(l)||/^play my .+ playlist$/.test(l)){
+    const opened=openLink(playUrl(),'Open your playlist in Amazon Music');
+    return (playlistUrl||PLAYLIST_URL?`Opening your playlist in Amazon Music, ${sir()}.`:`You haven’t set a playlist yet, ${sir()}, so I’m opening your Amazon Music playlists. Say “set my playlist” followed by the link to save one.`)+(opened?' Tap play when it opens.':'')}
+  if(m=l.match(/^play (.+?)(?: on amazon(?: music)?)?$/)){
+    const q=m[1].replace(/^(some|the song|the artist|songs by)\s+/,'');
+    const opened=openLink('https://music.amazon.com/search/'+encodeURIComponent(q),'Search Amazon Music for '+q);
+    return `Searching Amazon Music for ${q}, ${sir()}.`+(opened?' Tap play when it opens.':'')}
+  { const c=capitalOf(l);if(c)return c; const st=smallTalk(l);if(st)return st }
+  if(/^(test (the )?voice|voice test)/.test(l))return `Good afternoon, ${sir()}. All systems are operating within normal parameters.`;
+  if(m=t.match(/^say\s+(.+)/i))return m[1];
+  if(/^(help|commands|what can you do)/.test(l))return 'Offline, I can:\n• remember that… / what do you remember\n• note: … / show notes\n• timer 5 minutes / remind me in 10 min to call mom\n• time, date, battery, math (12*7), coin, roll\n• my name is… / say … / test voice\n• play my playlist / play <song or artist> (Amazon Music)\n• capital of any country\n• maths: 15% of 80, 12*12, square root of 2, solve 2x+3=11, 5 miles to km, average of 4, 8, 15\nFor anything else I wake my brain and chat.';
+  if(/^clear$/.test(l)){log.innerHTML='';return ''}
+  return null;
+}
+
+/* ---------- brain: a tiny local model that wakes on demand, sleeps when idle, and is crash-guarded ---------- */
+const GUARD='jv-guard';
+const guardOn=()=>{try{localStorage.setItem(GUARD,'1')}catch(e){}};
+const guardOff=()=>{try{localStorage.removeItem(GUARD)}catch(e){}};
+let engine=null,hist=[],busy=false,brainBlocked=false,brainLoading=false,idleT=null,loadP=null;
+let engKind='cpu';try{engKind=localStorage.getItem('jv-eng')||'cpu'}catch(e){}
+let size='smart';try{size=localStorage.getItem('jv-size')||'smart'}catch(e){}
+try{if(localStorage.getItem(GUARD)==='1'){brainBlocked=true;guardOff()}}catch(e){}
+function pickModel(list,f16,sz){
+  const prefs=sz==='fast'?['SmolLM2-360M-Instruct','Qwen2.5-0.5B-Instruct']:['Qwen2.5-0.5B-Instruct','Qwen2.5-1.5B-Instruct'];
+  const has=id=>list.some(m=>m.model_id===id);
+  for(const base of prefs)for(const q of (f16?['q4f16_1','q4f32_1']:['q4f32_1'])){const id=`${base}-${q}-MLC`;if(has(id))return id}
+  const ok=list.filter(m=>f16||!(m.required_features||[]).includes('shader-f16')).sort((a,b)=>(a.vram_required_MB||1e9)-(b.vram_required_MB||1e9));
+  return ok[0]&&ok[0].model_id;
+}
+async function diagnose(list,model){
+  const m=list.find(x=>x.model_id===model);if(!m)return '';
+  const t=async u=>{try{const r=await fetch(u,{headers:{Range:'bytes=0-0'},cache:'no-store'});return r.status}catch(e){return 'blocked'}};
+  const a=await t(String(m.model).replace(/\/$/,'')+'/resolve/main/mlc-chat-config.json'),b=await t(m.model_lib);
+  return ` [model files: ${a}, engine file: ${b}]`;
+}
+
+/* ---------- storage: find what this page may use, and fall back to memory if the browser blocks it all ---------- */
+async function probeStorage(){
+  const r={cache:false,idb:false};
+  try{await caches.open('jv-probe');await caches.delete('jv-probe');r.cache=true}catch(e){}
+  try{await new Promise((ok,no)=>{const q=indexedDB.open('jv-probe');q.onsuccess=()=>{try{q.result.close();indexedDB.deleteDatabase('jv-probe')}catch(e){}ok()};q.onerror=()=>no(q.error);q.onblocked=()=>no(new Error('blocked'))});r.idb=true}catch(e){}
+  return r;
+}
+/* a stand-in for Cache Storage that lives in memory. Files are stored as Blobs (the browser can keep these off the JS heap),
+   downloaded one at a time with live progress. Nothing is freed early: the brain looks each file up more than once. */
+let memBytes=0;
+function installMemoryCaches(onBytes){
+  if(window.__memCaches)return true;
+  const stores=new Map(),url=r=>typeof r==='string'?r:(r.url||String(r));
+  let queue=Promise.resolve();
+  const clean=h=>[...h].filter(([k])=>!/^content-(encoding|length)$/i.test(k));
+  async function download(r){
+    const res=await fetch(r);
+    if(!res.ok)throw new TypeError('Request failed ('+res.status+')');
+    const chunks=[],rd=res.body&&res.body.getReader();
+    if(rd){for(;;){const x=await rd.read();if(x.done)break;chunks.push(x.value);memBytes+=x.value.length;onBytes&&onBytes(memBytes)}}
+    else{const b=new Uint8Array(await res.arrayBuffer());chunks.push(b);memBytes+=b.length;onBytes&&onBytes(memBytes)}
+    return {blob:new Blob(chunks),status:res.status,headers:clean(res.headers)};
+  }
+  const mk=name=>{
+    if(!stores.has(name))stores.set(name,new Map());
+    const m=stores.get(name);
+    return {
+      async match(r){const k=url(r),e=m.get(k);if(!e)return undefined;
+        return new Response(e.blob,{status:e.status===206?200:e.status,headers:e.headers})},
+      async put(r,res){const blob=await res.blob();m.set(url(r),{blob,status:res.status||200,headers:clean(res.headers)})},
+      add(r){const p=queue.then(()=>download(r)).then(e=>{m.set(url(r),e)});queue=p.catch(()=>{});return p},
+      async addAll(rs){for(const r of rs)await this.add(r)},
+      async delete(r){return m.delete(url(r))},
+      async keys(){return [...m.keys()].map(u=>new Request(u))},
+      async matchAll(){return []}
+    }};
+  const cs={async open(n){return mk(n)},async has(n){return stores.has(n)},async delete(n){return stores.delete(n)},async keys(){return [...stores.keys()]},
+    async match(r){for(const m of stores.values()){const e=m.get(url(r));if(e)return new Response(e.blob,{status:e.status,headers:e.headers})}}};
+  try{Object.defineProperty(window,'caches',{value:cs,configurable:true});window.__memCaches=true;return true}catch(e){return false}
+}
+function sleepBrain(){clearTimeout(idleT);if(engine){try{engine.unload()}catch(e){}engine=null;ST.b='Brain: asleep (wakes on your next question)';status()}}
+/* steady engine: runs the model on the phone's processor (WebAssembly), so a limited graphics chip can't crash it */
+async function startCpuBrain(){
+  brainBlocked=false;brainLoading=true;ST.b='Brain: waking up (steady mode)';status();guardOn();keepAwake(true);
+  try{
+    const tf=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.0');
+    const sp=await probeStorage();
+    tf.env.allowLocalModels=false;tf.env.useBrowserCache=!!sp.cache;
+    try{tf.env.backends.onnx.wasm.numThreads=1}catch(e){}
+    const id=size==='fast'?'HuggingFaceTB/SmolLM2-135M-Instruct':'HuggingFaceTB/SmolLM2-360M-Instruct',files={};
+    const gen=await tf.pipeline('text-generation',id,{dtype:'q4',device:'wasm',progress_callback:p=>{
+      if(p&&p.file&&typeof p.loaded==='number'&&p.total){files[p.file]={l:p.loaded,t:p.total};let L=0,T=0;for(const k in files){L+=files[k].l;T+=files[k].t}
+        ST.b='Brain: downloading '+Math.round(L/1048576)+' of '+Math.round(T/1048576)+' MB'+(sp.cache?'':' (storage blocked: repeats every launch)');status()}
+      else if(p&&p.status==='ready'){ST.b='Brain: starting';status()}}});
+    engine={kind:'cpu',unload:async()=>{},chat:{completions:{create:async req=>{
+      const q=[];let done=false,err=null,wake=null;
+      const push=t=>{q.push(t);if(wake)wake()};
+      const streamer=new tf.TextStreamer(gen.tokenizer,{skip_prompt:true,skip_special_tokens:true,callback_function:push});
+      const sc=tf.InterruptableStoppingCriteria?new tf.InterruptableStoppingCriteria():null;
+      gen(req.messages,{max_new_tokens:req.max_tokens||48,do_sample:false,repetition_penalty:1.05,streamer,stopping_criteria:sc})
+        .then(()=>{done=true;if(wake)wake()},e=>{err=e;done=true;if(wake)wake()});
+      return (async function*(){try{for(;;){
+        if(q.length){yield {choices:[{delta:{content:q.shift()}}]};continue}
+        if(done){if(err)throw err;return}
+        await new Promise(r=>{wake=r});wake=null}}finally{if(sc&&!done){try{sc.interrupt()}catch(e){}}}})();
+    }}}};
+    ST.b='Brain: online (steady, SmolLM2 '+(size==='fast'?'135M':'360M')+')';
+  }catch(e){engine=null;ST.b='Brain: failed ('+short(e)+')'}
+  keepAwake(false);guardOff();brainLoading=false;status();
+}
+function startBrain(force){
+  if(engine)return Promise.resolve();
+  if(loadP)return loadP;
+  loadP=(async()=>{
+    if(brainBlocked&&!force){ST.b='Brain: paused after a crash (open ⚙ to retry)';status();return}
+    if(engKind==='cpu'){await startCpuBrain();return}
+    let f16=false,lowGpu=false;
+    try{if(!navigator.gpu)throw new Error('no WebGPU');const a=await navigator.gpu.requestAdapter();if(!a)throw new Error('no adapter');f16=a.features.has('shader-f16');
+      lowGpu=a.limits.maxBufferSize<1073741824||a.limits.maxStorageBufferBindingSize<1073741824}
+    catch(e){engKind='cpu';await startCpuBrain();return}
+    if(lowGpu){engKind='cpu';ST.b='Brain: this phone’s graphics limit is too low, so I’m using steady mode';status();await startCpuBrain();return}
+    brainBlocked=false;brainLoading=true;ST.b='Brain: waking up';status();guardOn();keepAwake(true);
+    let web=null,lastErr=null,lastModel='';
+    try{web=await import('https://esm.run/@mlc-ai/web-llm')}catch(e){lastErr=e}
+    if(web){
+      const list=web.prebuiltAppConfig.model_list,main=pickModel(list,f16,size),alt=pickModel(list,f16,size==='fast'?'smart':'fast');
+      const sp=await probeStorage();let mem=false;
+      let lastMB=-1,lastData=Date.now();
+      const memMsg=()=>'Brain: downloading '+Math.round(memBytes/1048576)+' MB (storage blocked, so this repeats every launch)';
+      if(!sp.cache&&!sp.idb)mem=installMemoryCaches(b=>{lastData=Date.now();const mb=Math.floor(b/1048576);if(mb!==lastMB){lastMB=mb;ST.b=memMsg();status()}});
+      const be=sp.idb?'indexeddb':'cache',be2=sp.idb&&sp.cache?'cache':be;
+      const tries=[[main,be],[main,be2],[alt,be]];
+      for(let i=0;i<tries.length&&!engine;i++){
+        const [model,backend]=tries[i];if(!model)continue;lastModel=model;
+        if(i>0){ST.b=`Brain: retrying (${i+1}/${tries.length})`;status();await sleep(2000*i)}
+        try{
+          const appConfig={...web.prebuiltAppConfig,cacheBackend:backend,useIndexedDBCache:backend==='indexeddb'};
+          engine=await web.CreateMLCEngine(model,{appConfig,initProgressCallback:p=>{lastData=Date.now();ST.b=mem?memMsg()+' · '+Math.round((p.progress||0)*100)+'%':'Brain: '+Math.round((p.progress||0)*100)+'%'+(i?` (try ${i+1})`:'');status()}},{context_window_size:1024});
+          ST.b='Brain: online ('+model.split('-MLC')[0].replace('-Instruct','')+')';
+        }catch(e){engine=null;lastErr=e;if(/lost|out of memory|shader|f16/i.test(String(e&&e.message||e)))break}
+      }
+      if(!engine){
+        const msg=String(lastErr&&lastErr.message||lastErr),framed=window.top!==window.self;
+        ST.b=/cache storage|storage is disabled|quota|indexeddb|security/i.test(msg)
+          ?'Brain: your browser is blocking storage for this page'+(framed?' (the page is running inside a frame, which your host adds)':'')+'. Open the page directly in Chrome, allow cookies and site data for it, or use a host that doesn’t frame pages. ('+short(lastErr)+')'
+          :'Brain: failed ('+short(lastErr)+')'+await diagnose(list,lastModel);
+      }
+    }else ST.b='Brain: couldn’t load the engine ('+short(lastErr)+')';
+    keepAwake(false);guardOff();brainLoading=false;status();
+  })().finally(()=>{loadP=null});
+  return loadP;
+}
+const sys=()=>'You are Jarvis, a concise assistant. Answer the question directly and correctly in one short sentence. If you do not know, say you do not know.'+(M.facts.length?' Facts about the user: '+M.facts.slice(-5).join('; ')+'.':'');
+const SHOTS=[{role:'user',content:'What is the capital of Japan?'},{role:'assistant',content:'Tokyo, sir.'},{role:'user',content:'Who wrote Hamlet?'},{role:'assistant',content:'William Shakespeare, sir.'},{role:'user',content:'What is the largest planet?'},{role:'assistant',content:'Jupiter, sir.'}];
+async function think(t){
+  if(busy){add('j','One moment, '+sir()+'. I’m still answering the last one.');return}
+  busy=true;clearTimeout(idleT);guardOn();
+  const my=nvReady&&voiceOn?sayStart():(stopAll(),null);setS('think');
+  const el=typing();let acc='',spoken=0,n=0,t0=0,sent=0;
+  try{
+    hist.push({role:'user',content:t.slice(0,400)});hist=hist.slice(-4);
+    const r=await engine.chat.completions.create({messages:[{role:'system',content:sys()},...SHOTS,...hist],stream:true,temperature:.3,max_tokens:48});
+    for await(const c of r){
+      const d=(c.choices&&c.choices[0]&&c.choices[0].delta&&c.choices[0].delta.content)||'';
+      if(d){let dd=d;if(!acc)dd=dd.replace(/^\s+/,'');if(dd){if(!n)t0=performance.now();n++;acc+=dd;el.textContent=acc;log.scrollTop=log.scrollHeight}}
+      if(my!==null){let i;while(sent<2&&(i=acc.slice(spoken).search(/[.!?]\s/))>=0){sayPush(acc.slice(spoken,spoken+i+1),my);spoken+=i+2;sent++}}
+      if((acc.match(/[.!?]\s/g)||[]).length>=2)break;
+    }
+    if(!acc.trim())throw new Error('empty reply');
+    let fin=acc.trim();
+    const ss=fin.match(/[^.!?]+[.!?]+/g);
+    if(ss&&ss.length>2)fin=ss.slice(0,2).join('').trim();
+    else if(ss&&!/[.!?]$/.test(fin))fin=ss.join('').trim();
+    if(!/[.!?]$/.test(fin))fin+='.';
+    el.textContent=fin;out(fin);
+    hist.push({role:'assistant',content:fin});
+    if(my!==null){const rest=fin.slice(Math.min(spoken,fin.length));if(rest.trim())sayPush(rest,my);sayEnd(my)}else speak(fin);
+    const tps=n>1?(n-1)/((performance.now()-t0)/1000):0;
+    if(tps)ST.b='Brain: online · '+tps.toFixed(1)+' tok/s';status();guardOff();
+  }catch(e){
+    hist=hist.filter(h=>h.content!==t.slice(0,400));guardOff();
+    const msg=String(e&&e.message||e);
+    if(engKind==='gpu'&&/lost|device|gpu|instance|disposed|buffer/i.test(msg)){
+      try{engine.unload()}catch(x){}
+      engine=null;engKind='cpu';try{localStorage.setItem('jv-eng','cpu')}catch(x){}
+      el.innerHTML='';el.textContent='My graphics chip dropped out, '+sir()+'. Switching to steady mode.';
+      busy=false;ST.b='Brain: switching to steady mode';status();
+      await startBrain(true);
+      if(engine)return think(t);
+      setS('idle');return;
+    }
+    el.innerHTML='';el.textContent=/memory|alloc|oom|abort/i.test(msg)?'I ran out of memory, '+sir()+'. Try the Fast brain size in the settings.':'I lost my train of thought, '+sir()+'. Try again.';
+  }
+  busy=false;if(document.body.dataset.s==='think')setS('idle');
+  idleT=setTimeout(sleepBrain,1800000);
+}
+
+/* ---------- main handler ---------- */
+let remoteTurn=false;
+function out(text){if(remoteTurn&&dc&&dc.readyState==='open'){try{dc.send(JSON.stringify({t:'reply',text}))}catch(e){}}}
+async function handle(t,remote){
+  t=t.trim();if(!t)return;const ch=document.getElementById('chips');if(ch)ch.remove();
+  add('u',remote?'📡 '+t:t);remoteTurn=!!remote;
+  try{
+    const a=await local(t);
+    if(a!==null){if(a){const tx=typeof a==='object'?a.text:a,sp=typeof a==='object'?(a.say||a.text):a;add('j',tx);speak(sp);out(tx)}return}
+    if(!engine){
+      const say=m=>{add('j',m);speak(m);out(m)};
+      if(brainLoading){say(`My brain is still waking, ${sir()}. Ask again in a moment.`);return}
+      if(brainBlocked){say(`My brain is paused after a crash, ${sir()}. Open the settings and tap Brain to retry.`);return}
+      add('j',`One moment, ${sir()}. I’m waking my brain.`);
+      await startBrain();
+      if(!engine){say(`I couldn’t wake my brain, ${sir()}. Commands still work. Say “help”.`);return}
+    }
+    return await think(t);
+  }finally{remoteTurn=false}
+}
+const send=()=>{const t=inp.value;inp.value='';handle(t);inp.focus()};
+document.querySelector('.go').addEventListener('click',send);
+inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();send()}});
+document.querySelectorAll('#f button').forEach(b=>b.addEventListener('mousedown',e=>e.preventDefault()));
+const vv=window.visualViewport;
+function fit(){if(!vv)return;document.body.style.height=vv.height+'px';document.body.style.top=vv.offsetTop+'px';log.scrollTop=log.scrollHeight}
+if(vv){vv.addEventListener('resize',fit);vv.addEventListener('scroll',fit)}
+
+/* ---------- link another device: a direct phone-to-phone connection, no server. Paste a code each way once. ---------- */
+let pc=null,dc=null;
+const RTC_CFG={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
+const b64u=b=>{let s='';for(let i=0;i<b.length;i+=8192)s+=String.fromCharCode.apply(null,b.subarray(i,i+8192));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+const unb64u=t=>{t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';const s=atob(t),b=new Uint8Array(s.length);for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);return b};
+async function pack(o){const j=JSON.stringify(o);
+  try{const st=new Blob([j]).stream().pipeThrough(new CompressionStream('gzip'));return 'J1.'+b64u(new Uint8Array(await new Response(st).arrayBuffer()))}
+  catch(e){return 'J0.'+b64u(new TextEncoder().encode(j))}}
+async function unpack(s){s=String(s).trim();const tag=s.slice(0,3),b=unb64u(s.slice(3));
+  if(tag==='J1.'){const st=new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'));return JSON.parse(await new Response(st).text())}
+  return JSON.parse(new TextDecoder().decode(b))}
+const iceDone=c=>new Promise(r=>{if(c.iceGatheringState==='complete')return r();const f=()=>{if(c.iceGatheringState==='complete'){c.removeEventListener('icegatheringstatechange',f);r()}};c.addEventListener('icegatheringstatechange',f);setTimeout(r,4000)});
+function linkState(t){const el=$('#linkStat');if(el)el.textContent=t;ST.l=t}
+function linkReset(){try{if(dc)dc.close()}catch(e){}try{if(pc)pc.close()}catch(e){}pc=dc=null}
+async function linkCreate(){
+  linkReset();linkState('Creating a code…');
+  try{
+    pc=new RTCPeerConnection(RTC_CFG);dc=pc.createDataChannel('jarvis');wireDC(dc);
+    pc.onconnectionstatechange=()=>{if(pc&&/failed|disconnected|closed/.test(pc.connectionState))linkState('Link: disconnected')};
+    await pc.setLocalDescription(await pc.createOffer());await iceDone(pc);
+    $('#linkOut').value=await pack({t:'offer',sdp:pc.localDescription.sdp});
+    linkState('Send this code to the other device, then paste its reply below.');
+  }catch(e){linkState('Couldn’t create a code ('+short(e)+')')}
+}
+async function linkConnect(){
+  try{if(!pc)throw new Error('create a code first');const a=await unpack($('#linkIn').value);
+    await pc.setRemoteDescription({type:'answer',sdp:a.sdp});linkState('Connecting…')}
+  catch(e){linkState('That reply code didn’t work ('+short(e)+')')}
+}
+function wireDC(ch){
+  ch.onopen=()=>{openSheet(false);linkState('Link: connected');add('j','A linked device is connected, '+sir()+'. It can now send me commands.');status()};
+  ch.onclose=()=>{linkState('Link: disconnected');status()};
+  ch.onmessage=async e=>{let m;try{m=JSON.parse(e.data)}catch(x){return}
+    if(m.t==='cmd'&&typeof m.text==='string')handle(m.text.slice(0,500),true);
+    else if(m.t==='code'&&typeof m.code==='string')askToRun(String(m.name||'a snippet'),m.code.slice(0,6000));
+    else if(m.t==='ping')try{ch.send(JSON.stringify({t:'pong'}))}catch(x){}};
+}
+/* code from a linked device never runs until you tap Allow */
+function askToRun(name,code){
+  openSheet(false);try{navigator.vibrate&&navigator.vibrate(120)}catch(e){}
+  const d=add('j','');d.style.maxWidth='94%';
+  const h=document.createElement('div');h.textContent='A linked device wants to run code on me, '+sir()+': “'+name+'”';d.append(h);
+  const pre=document.createElement('pre');pre.textContent=code;pre.style.cssText='white-space:pre-wrap;max-height:160px;overflow:auto;background:#060d17;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:12px;margin:8px 0';d.append(pre);
+  const row=document.createElement('div');row.style.cssText='display:flex;gap:8px';
+  const mk=(t,c)=>{const b=document.createElement('button');b.textContent=t;b.type='button';b.style.cssText='flex:1;min-height:44px;border-radius:12px;border:1px solid '+c+';background:transparent;color:'+c+';font-size:15px;cursor:pointer';return b};
+  const ok=mk('Allow once','var(--arc)'),no=mk('Deny','var(--bad)');
+  const reply=t=>{try{dc&&dc.readyState==='open'&&dc.send(JSON.stringify({t:'reply',text:t}))}catch(e){}};
+  ok.onclick=async()=>{row.remove();const note=document.createElement('div');note.textContent='Allowed. Running…';d.append(note);
+    const api={say:t=>{add('j',String(t));speak(String(t))},add:t=>add('j',String(t)),handle:t=>handle(String(t),true),speak:t=>speak(String(t)),openLink,remember:f=>{M.facts.push(String(f));save()},name:()=>sir(),sleep:ms=>new Promise(r=>setTimeout(r,ms))};
+    try{const r=await new Function('jarvis','"use strict";return (async()=>{'+code+'\n})()')(api);note.textContent='Done'+(r!==undefined?': '+String(r).slice(0,200):'.');reply('Code ran'+(r!==undefined?': '+String(r).slice(0,200):'.'))}
+    catch(e){note.textContent='The code failed: '+short(e);reply('Code failed: '+short(e))}};
+  no.onclick=()=>{row.remove();const note=document.createElement('div');note.textContent='Denied.';d.append(note);reply('Denied by the owner.')};
+  row.append(ok,no);d.append(row);log.scrollTop=log.scrollHeight;
+}
+$('#linkMake').onclick=linkCreate;
+$('#linkGo').onclick=linkConnect;
+$('#linkCopy').onclick=async()=>{const v=$('#linkOut').value;if(!v)return;try{await navigator.clipboard.writeText(v);linkState('Code copied.')}catch(e){$('#linkOut').select();linkState('Press and hold the code, then Copy.')}};
+$('#linkShare').onclick=async()=>{const v=$('#linkOut').value;if(!v)return;try{await navigator.share({title:'Jarvis link code',text:v})}catch(e){linkState('Sharing isn’t available here. Use Copy.')}};
+
+/* ---------- installable app: works when the files are on a normal web host (see jarvis-app.zip) ---------- */
+let installEvt=null;
+if(/^https?:$/.test(location.protocol)&&window.top===window.self){
+  try{const l=document.createElement('link');l.rel='manifest';l.href='manifest.webmanifest';document.head.append(l)}catch(e){}
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+  addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;$('#installRow').style.display='flex'});
+  addEventListener('appinstalled',()=>{$('#installRow').style.display='none';add('j','Installed, '+sir()+'. Find me on your home screen.')});
+}
+$('#installBtn').onclick=async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice}catch(e){}installEvt=null;$('#installRow').style.display='none'};
+
+/* ---------- settings sheet ---------- */
+const sheet=$('#sheet'),scrim=$('#scrim');
+const openSheet=o=>{sheet.classList.toggle('open',o);scrim.classList.toggle('open',o);if(o)labels()};
+$('#gear').onclick=()=>openSheet(true);scrim.onclick=()=>openSheet(false);$('#done').onclick=()=>openSheet(false);
+const setSw=(id,on)=>$(id).setAttribute('aria-checked',on?'true':'false');
+const setSeg=(id,v)=>document.querySelectorAll(id+' button').forEach(b=>b.classList.toggle('on',b.dataset.v===String(v)));
+function labels(){
+  setSw('#swVoice',voiceOn);setSw('#swMatch',matchOn);setSw('#swBrain',!!engine||brainLoading);
+  setSeg('#segSpeed',speed);setSeg('#segSize',size);setSeg('#segBrainEng',engKind);setSeg('#segEngine',voiceQ);
+  if(document.activeElement!==$('#plIn'))$('#plIn').value=playlistUrl||PLAYLIST_URL||'';
+  $('#detV').textContent=ST.v;$('#detB').textContent=ST.b;
+}
+$('#swVoice').onclick=()=>{voiceOn=!voiceOn;if(!voiceOn)stopAll();else speak('Voice online.');labels()};
+$('#swMatch').onclick=()=>{matchOn=!matchOn;try{localStorage.setItem('jv-matchoff',matchOn?'0':'1')}catch(e){}applyMatch();labels()};
+$('#swBrain').onclick=()=>{if(engine)sleepBrain();else if(!brainLoading)startBrain(true);labels()};
+document.querySelectorAll('#segSpeed button').forEach(b=>b.onclick=()=>{speed=parseFloat(b.dataset.v);try{localStorage.setItem('jv-speed',speed)}catch(e){}labels();speak('Speed set, '+sir()+'.')});
+$('#plSave').onclick=()=>{const u=$('#plIn').value.trim();if(!/^https?:\/\//.test(u)){add('j','That doesn’t look like a link, '+sir()+'. Paste the full playlist link.');return}const ok=savePlaylist(u);openSheet(false);add('j',ok?'Playlist saved, '+sir()+'. Say “play my playlist” any time.':'Got it, '+sir()+', but this viewer blocks saving, so I’ll forget it when you close the page. Paste the link into the file to keep it.')};
+document.querySelectorAll('#segBrainEng button').forEach(b=>b.onclick=()=>{engKind=b.dataset.v;try{localStorage.setItem('jv-eng',engKind)}catch(e){}sleepBrain();ST.b='Brain: asleep ('+(engKind==='cpu'?'steady':'fast GPU')+' mode next)';status()});
+document.querySelectorAll('#segSize button').forEach(b=>b.onclick=()=>{size=b.dataset.v;try{localStorage.setItem('jv-size',size)}catch(e){}sleepBrain();ST.b='Brain: asleep ('+(size==='fast'?'fast':'smarter')+' model next)';status()});
+document.querySelectorAll('#segEngine button').forEach(b=>b.onclick=()=>{
+  if(voiceQ===b.dataset.v)return;voiceQ=b.dataset.v;try{localStorage.setItem('jv-vq',voiceQ);localStorage.removeItem('jv-match')}catch(e){}
+  mt=null;cal={f:[],b:[]};applyMatch();nvReady=false;startVoice();labels()});
+document.querySelectorAll('#chips button').forEach(b=>b.onclick=()=>handle(b.dataset.q));
+
+add('j',`Systems online, ${sir()}. Say “help” to see what I can do.`);
+status();
+startVoice().then(()=>startBrain());
+</script>
+</body>
+</html>
